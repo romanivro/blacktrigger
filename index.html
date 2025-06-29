@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BlackTrigger HQ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap">
+  <style>
+    body {
+      font-family: 'Roboto Mono', monospace;
+      background: #111;
+      color: #0f0;
+      padding: 20px;
+    }
+    section { margin-bottom: 30px; }
+    input, select, button {
+      background: #000;
+      color: #0f0;
+      border: 1px solid #0f0;
+      padding: 5px;
+      margin: 5px 0;
+    }
+    ul { list-style: none; padding-left: 0; }
+    canvas { background: #222; }
+    .tag-checkbox { margin-right: 5px; }
+    .tags label { display: inline-block; margin-right: 10px; }
+    .person-entry { margin-bottom: 10px; }
+    .smart { color: cyan; }
+    .sly { color: orange; }
+  </style>
+</head>
+<body>
+  <h1>🧠 BlackTrigger HQ</h1>
+
+  <!-- 📜 Правило дня -->
+  <section>
+    <h2>📜 Правило дня</h2>
+    <div id="rule">Загрузка...</div>
+    <button onclick="getRule()">Следующее</button>
+  </section>
+
+  <!-- 📋 План -->
+  <section>
+    <h2>📋 План на день</h2>
+    <input type="text" id="taskInput" placeholder="Новая задача..." />
+    <button onclick="addTask()">Добавить</button>
+    <ul id="taskList"></ul>
+  </section>
+
+  <!-- 👥 Окружение -->
+  <section>
+    <h2>👥 Окружение</h2>
+    <input type="text" id="personName" placeholder="Имя / позывной" />
+    <select id="personStatus">
+      <option value="green">🟢 Друг</option>
+      <option value="yellow">🟡 Нейтрал</option>
+      <option value="red">🔴 Враг</option>
+    </select>
+    <br />
+    <div class="tags">
+      <label><input type="checkbox" id="tagSmart" class="tag-checkbox"> 🧠 Умный</label>
+      <label><input type="checkbox" id="tagSly" class="tag-checkbox"> 🕵️ Хитрый</label>
+      <label><input type="checkbox" id="tagResource" class="tag-checkbox"> 💰 Ресурс</label>
+      <label><input type="checkbox" id="tagBallast" class="tag-checkbox"> 🪨 Балласт</label>
+    </div>
+    <button onclick="addPerson()">Добавить</button>
+    <ul id="peopleList"></ul>
+  </section>
+
+  <!-- ⚖️ Анализ -->
+  <section>
+    <h2>⚖️ Рекомендации штаба</h2>
+    <ul id="intelList"></ul>
+  </section>
+
+  <!-- 🔁 Скрипт -->
+  <script src="app.js"></script>
+</body>
+</html>
