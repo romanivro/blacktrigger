@@ -5,29 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>BlackTrigger</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <h1>BlackTrigger</h1>
 
   <!-- 📜 Правило дня -->
-  <section id="rule-block">
+  <section>
     <h2>📜 Правило дня</h2>
     <div id="rule" class="rule">Загружается...</div>
     <button onclick="getRule()">Следующее правило</button>
   </section>
 
   <!-- 📋 План на день -->
-  <section id="task-block">
+  <section>
     <h2>📋 План на день</h2>
-    <input type="text" id="taskInput" placeholder="Ввести задачу..." />
+    <input type="text" id="taskInput" placeholder="Задача..." />
     <button onclick="addTask()">Добавить</button>
     <ul id="taskList"></ul>
   </section>
 
   <!-- ⏰ Напоминания -->
-  <section id="reminder-block">
+  <section>
     <h2>⏰ Напоминания</h2>
     <input type="time" id="reminderTime" />
     <input type="text" id="reminderText" placeholder="Что напомнить?" />
@@ -36,9 +36,9 @@
   </section>
 
   <!-- 👥 Окружение -->
-  <section id="people-block">
+  <section>
     <h2>👥 Окружение</h2>
-    <input type="text" id="personName" placeholder="Имя или позывной" />
+    <input type="text" id="personName" placeholder="Имя / позывной" />
     <select id="personStatus">
       <option value="green">🟢 Лояльный</option>
       <option value="yellow">🟡 Нейтрал</option>
@@ -46,42 +46,41 @@
     </select>
     <button onclick="addPerson()">Добавить</button>
     <ul id="peopleList"></ul>
-    <!-- 🔖 Метки -->
     <div class="tags">
-      <label><input type="checkbox" id="tagResource" class="tag-checkbox" /> 💰 Ресурс</label>
-      <label><input type="checkbox" id="tagBallast" class="tag-checkbox" /> 🪨 Балласт</label>
-      <label><input type="checkbox" id="tagWeak" class="tag-checkbox" /> 🧠 Слабый</label>
-      <label><input type="checkbox" id="tagReligious" class="tag-checkbox" /> ✝️ Религиозный</label>
-      <label><input type="checkbox" id="tagClever" class="tag-checkbox" /> 🧠 Умный</label>
-      <label><input type="checkbox" id="tagTricky" class="tag-checkbox" /> 🦊 Хитрый</label>
+      <label><input type="checkbox" id="tagResource" /> 💰 Ресурс</label>
+      <label><input type="checkbox" id="tagBallast" /> 🪨 Балласт</label>
+      <label><input type="checkbox" id="tagWeak" /> 🧠 Слабый</label>
+      <label><input type="checkbox" id="tagReligious" /> ✝️ Религиозный</label>
+      <label><input type="checkbox" id="tagSmart" /> 🧠 Умный</label>
+      <label><input type="checkbox" id="tagCunning" /> 🦊 Хитрый</label>
     </div>
   </section>
 
   <!-- 🏋️ Физо -->
-  <section id="fit-block">
+  <section>
     <h2>🏋️ Физо</h2>
     <input type="text" id="exercise" placeholder="Тип (бег, турник...)" />
-    <input type="number" id="amount" placeholder="Количество/время" />
+    <input type="number" id="amount" placeholder="Кол-во / время" />
     <button onclick="addWorkout()">Записать</button>
     <ul id="fitLog"></ul>
   </section>
 
-  <!-- 📊 График физо -->
-  <section id="fit-chart-block">
+  <!-- 📊 График -->
+  <section>
     <h2>📊 Прогресс физо</h2>
     <canvas id="fitChart" width="400" height="200"></canvas>
   </section>
 
   <!-- 🧠 Архетип -->
-  <section id="test-block">
+  <section>
     <h2>🧠 Архетип</h2>
     <div id="quiz"></div>
     <button onclick="startTest()">Пройти тест</button>
     <div id="result"></div>
   </section>
 
-  <!-- 🗺️ Карта стратегии -->
-  <section id="strategy-block">
+  <!-- 🗺️ Стратегия -->
+  <section>
     <h2>🗺️ Карта стратегии</h2>
     <input type="text" id="goalInput" placeholder="Цель..." />
     <select id="goalType">
@@ -93,17 +92,15 @@
     <ul id="strategyList"></ul>
   </section>
 
-  <!-- 📚 Лог активности -->
-  <section id="log-block">
+  <!-- 📚 Лог -->
+  <section>
     <h2>📚 Лог активности</h2>
     <button onclick="toggleLog()">Показать/Скрыть</button>
     <ul id="logList" style="display: none;"></ul>
     <canvas id="activityChart" width="400" height="150"></canvas>
   </section>
 
-  <!-- 🔁 Подключение ядра -->
-  <script src="main.js"></script>
-
-<link rel="manifest" href="manifest.json" />
+  <!-- 📦 Скрипт -->
+  <script type="module" src="main.js"></script>
 </body>
 </html>
