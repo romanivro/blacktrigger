@@ -1,11 +1,11 @@
 {
   "name": "BlackTrigger",
-  "short_name": "BT",
+  "short_name": "Trigger",
   "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#000000",
-  "theme_color": "#00ff00",
-  "description": "Боевой штаб хищника: стратегия, окружение, физо, архетипы, контроль.",
+  "theme_color": "#0f0f0f",
+  "description": "Боевой штаб: стратегия, контроль, власть.",
   "icons": [
     {
       "src": "icons/icon-192.png",
