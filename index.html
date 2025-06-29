@@ -21,7 +21,7 @@
   <!-- 📋 План на день -->
   <section id="task-block">
     <h2>📋 План на день</h2>
-    <input type="text" id="taskInput" placeholder="Задача..." />
+    <input type="text" id="taskInput" placeholder="Ввести задачу..." />
     <button onclick="addTask()">Добавить</button>
     <ul id="taskList"></ul>
   </section>
@@ -38,7 +38,7 @@
   <!-- 👥 Окружение -->
   <section id="people-block">
     <h2>👥 Окружение</h2>
-    <input type="text" id="personName" placeholder="Имя / Позывной" />
+    <input type="text" id="personName" placeholder="Имя или позывной" />
     <select id="personStatus">
       <option value="green">🟢 Лояльный</option>
       <option value="yellow">🟡 Нейтрал</option>
@@ -54,20 +54,20 @@
       <label><input type="checkbox" id="tagWeak" class="tag-checkbox" /> 🧠 Слабый</label>
       <label><input type="checkbox" id="tagReligious" class="tag-checkbox" /> ✝️ Религиозный</label>
       <label><input type="checkbox" id="tagSmart" class="tag-checkbox" /> 🧠 Умный</label>
-      <label><input type="checkbox" id="tagTricky" class="tag-checkbox" /> 🦊 Хитрый</label>
+      <label><input type="checkbox" id="tagCunning" class="tag-checkbox" /> 🦊 Хитрый</label>
     </div>
   </section>
 
   <!-- 🏋️ Физо -->
   <section id="fit-block">
     <h2>🏋️ Физо</h2>
-    <input type="text" id="exercise" placeholder="Упражнение..." />
-    <input type="number" id="amount" placeholder="Количество / Время" />
+    <input type="text" id="exercise" placeholder="Тип (бег, турник...)" />
+    <input type="number" id="amount" placeholder="Количество/время" />
     <button onclick="addWorkout()">Записать</button>
     <ul id="fitLog"></ul>
   </section>
 
-  <!-- 📊 Прогресс физо -->
+  <!-- 📊 График физо -->
   <section id="fit-chart-block">
     <h2>📊 Прогресс физо</h2>
     <canvas id="fitChart" width="400" height="200"></canvas>
@@ -81,7 +81,7 @@
     <div id="result"></div>
   </section>
 
-  <!-- 🗺️ Карта стратегии -->
+  <!-- 🗺️ Стратегия -->
   <section id="strategy-block">
     <h2>🗺️ Карта стратегии</h2>
     <input type="text" id="goalInput" placeholder="Цель..." />
@@ -96,13 +96,13 @@
 
   <!-- 📚 Лог -->
   <section id="log-block">
-    <h2>📚 Лог действий</h2>
-    <button onclick="toggleLog()">Показать / Скрыть</button>
+    <h2>📚 Лог активности</h2>
+    <button onclick="toggleLog()">Показать/Скрыть</button>
     <ul id="logList" style="display: none;"></ul>
     <canvas id="activityChart" width="400" height="150"></canvas>
   </section>
 
-  <!-- 🔁 Скрипт -->
-  <script type="module" src="app.js"></script>
+  <!-- 🔁 Скрипты -->
+  <script type="module" src="main.js"></script>
 </body>
 </html>
