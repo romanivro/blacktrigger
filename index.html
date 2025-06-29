@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>BlackTrigger</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -14,7 +14,7 @@
   <!-- 📜 Правило дня -->
   <section id="rule-block">
     <h2>📜 Правило дня</h2>
-    <div id="rule">Загружается...</div>
+    <div id="rule" class="rule">Загружается...</div>
     <button onclick="getRule()">Следующее правило</button>
   </section>
 
@@ -46,15 +46,14 @@
     </select>
     <button onclick="addPerson()">Добавить</button>
     <ul id="peopleList"></ul>
-
     <!-- 🔖 Метки -->
     <div class="tags">
       <label><input type="checkbox" id="tagResource" class="tag-checkbox" /> 💰 Ресурс</label>
       <label><input type="checkbox" id="tagBallast" class="tag-checkbox" /> 🪨 Балласт</label>
       <label><input type="checkbox" id="tagWeak" class="tag-checkbox" /> 🧠 Слабый</label>
       <label><input type="checkbox" id="tagReligious" class="tag-checkbox" /> ✝️ Религиозный</label>
-      <label><input type="checkbox" id="tagSmart" class="tag-checkbox" /> 🧠 Умный</label>
-      <label><input type="checkbox" id="tagCunning" class="tag-checkbox" /> 🦊 Хитрый</label>
+      <label><input type="checkbox" id="tagClever" class="tag-checkbox" /> 🧠 Умный</label>
+      <label><input type="checkbox" id="tagTricky" class="tag-checkbox" /> 🦊 Хитрый</label>
     </div>
   </section>
 
@@ -81,7 +80,7 @@
     <div id="result"></div>
   </section>
 
-  <!-- 🗺️ Стратегия -->
+  <!-- 🗺️ Карта стратегии -->
   <section id="strategy-block">
     <h2>🗺️ Карта стратегии</h2>
     <input type="text" id="goalInput" placeholder="Цель..." />
@@ -94,7 +93,7 @@
     <ul id="strategyList"></ul>
   </section>
 
-  <!-- 📚 Лог -->
+  <!-- 📚 Лог активности -->
   <section id="log-block">
     <h2>📚 Лог активности</h2>
     <button onclick="toggleLog()">Показать/Скрыть</button>
@@ -102,7 +101,7 @@
     <canvas id="activityChart" width="400" height="150"></canvas>
   </section>
 
-  <!-- 🔁 Скрипты -->
-  <script type="module" src="main.js"></script>
+  <!-- 🔁 Подключение ядра -->
+  <script src="main.js"></script>
 </body>
 </html>
