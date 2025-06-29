@@ -1,122 +1,88 @@
+/* Общий стиль */
 body {
-  margin: 0;
-  padding: 0;
-  background-color: #0a0a0a;
-  color: #f0f0f0;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  line-height: 1.6;
+  background-color: #111;
+  color: #0f0;
+  font-family: monospace;
   padding: 20px;
+  margin: 0;
 }
 
 h1, h2 {
   color: #0f0;
-  text-transform: uppercase;
-  margin-bottom: 10px;
+  border-bottom: 1px solid #0f0;
+  padding-bottom: 4px;
 }
 
-input, select, button, textarea {
-  background-color: #111;
-  color: #f0f0f0;
-  border: 1px solid #333;
-  border-radius: 5px;
-  padding: 8px;
+section {
+  margin-bottom: 25px;
+  padding: 10px;
+  border: 1px solid #0f0;
+  border-radius: 10px;
+}
+
+input, select, button {
+  padding: 6px 10px;
   margin: 5px 0;
-  width: 100%;
-  box-sizing: border-box;
+  background: #222;
+  color: #0f0;
+  border: 1px solid #0f0;
+  border-radius: 6px;
+}
+
+input::placeholder, select {
+  color: #aaa;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  margin: 5px 0;
+  padding: 6px;
+  background: #222;
+  border-left: 4px solid #0f0;
+  border-radius: 5px;
 }
 
 button {
   cursor: pointer;
-  background-color: #222;
-  transition: background-color 0.2s;
 }
+
 button:hover {
-  background-color: #333;
-}
-
-section {
-  border: 1px solid #222;
-  border-radius: 10px;
-  padding: 15px;
-  margin-bottom: 20px;
-  background-color: #121212;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-ul li {
-  padding: 5px 10px;
-  margin: 3px 0;
-  background-color: #1a1a1a;
-  border-left: 4px solid #0f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.95em;
-}
-
-ul li span {
-  font-weight: bold;
+  background-color: #0f0;
+  color: #000;
 }
 
 .rule {
-  font-style: italic;
-  color: #ff0;
-  padding: 10px;
-  border-left: 4px solid #ff0;
-  background-color: #1a1a1a;
-  margin-bottom: 10px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff;
 }
 
-#fitChart, #activityChart {
-  background-color: #1a1a1a;
-  border: 1px solid #333;
-  padding: 10px;
-  border-radius: 10px;
-}
-
-select {
-  width: 100%;
-}
-
-.tag-checkbox {
-  margin-right: 5px;
-}
-
+/* Метки */
 .tags {
   margin-top: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
 }
 
 .tags label {
-  background-color: #1a1a1a;
-  padding: 5px 10px;
-  border-radius: 5px;
-  border: 1px solid #333;
-  font-size: 0.9em;
-  display: flex;
-  align-items: center;
+  display: inline-block;
+  margin-right: 15px;
+  font-size: 14px;
 }
+
+.tag-checkbox {
+  margin-right: 4px;
+}
+
+/* Цвета по статусу */
+.green { color: #0f0; }
+.red { color: #f00; }
+.yellow { color: #ff0; }
 
 canvas {
-  max-width: 100%;
-}
-
-@media (max-width: 600px) {
-  body {
-    padding: 10px;
-  }
-
-  input, select, button {
-    font-size: 14px;
-  }
-
-  h1 {
-    font-size: 1.5em;
-  }
+  background: #222;
+  border: 1px solid #0f0;
+  border-radius: 5px;
 }
