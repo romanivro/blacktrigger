@@ -465,6 +465,12 @@ if ("serviceWorker" in navigator) {
     .catch(err => console.error("Service Worker ошибка:", err));
 }
 
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js")
+    .then(() => console.log("✅ Service Worker активирован"))
+    .catch(err => console.error("Ошибка SW:", err));
+}
+
 // 🔁 Старт
 window.addEventListener("DOMContentLoaded", () => {
   getRule();
