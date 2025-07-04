@@ -4,10 +4,94 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Продуктивность</title>
-  <link rel="stylesheet" href="css/styles.css">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#ffffff">
   <link rel="icon" href="icons/icon-192.png">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: var(--bg-color);
+      color: var(--text-color);
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    section {
+      margin-bottom: 20px;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .finance-columns {
+      display: flex;
+      align-items: stretch;
+      border-left: 2px solid #ccc;
+      border-right: 2px solid #ccc;
+    }
+    .finance-columns > div {
+      width: 48%;
+      padding: 0 10px;
+    }
+    .finance-divider {
+      width: 2px;
+      background: #ccc;
+    }
+    .finance-summary {
+      text-align: center;
+      margin-top: 10px;
+    }
+    input, select, button {
+      margin: 5px;
+      padding: 8px;
+      border-radius: 4px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-color: #333;
+        --text-color: #fff;
+      }
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg-color: #fff;
+        --text-color: #333;
+      }
+    }
+    @media (max-width: 600px) {
+      .finance-columns {
+        flex-direction: column;
+        border-left: none;
+        border-right: none;
+      }
+      .finance-columns > div {
+        width: 100%;
+      }
+      .finance-divider {
+        height: 2px;
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -59,12 +143,20 @@
         <option value="enemy">Враг</option>
         <option value="contract">Контракт</option>
       </select>
-      <input type="text" id="person-tags" placeholder="Метки (через запятую)">
+      <select id="person-tags" multiple>
+        <option value="💰 Ресурс">💰 Ресурс</option>
+        <option value="🪨 Балласт">🪨 Балласт</option>
+        <option value="🧠 Внушаемый">🧠 Внушаемый</option>
+        <option value="🗣️ Болтун">🗣️ Болтун</option>
+        <option value="✝️ Религиозный">✝️ Религиозный</option>
+        <option value="🧩 Манипулятор">🧩 Манипулятор</option>
+        <option value="🧲 Завистливый">🧲 Завистливый</option>
+        <option value="🦊 Хитрый">🦊 Хитрый</option>
+      </select>
       <input type="number" id="person-karma" min="-100" max="100" step="10" value="0">
       <button onclick="addPerson()">Добавить</button>
       <ul id="person-list"></ul>
-      <div id="network-graph"></div>
-    </section>
+    section>
 
     <!-- Физо -->
     <section id="fitness">
@@ -91,12 +183,15 @@
           <h3>Доходы</h3>
           <ul id="income-list"></ul>
         </div>
+        <div class="finance-divider"></div>
         <div>
           <h3>Расходы</h3>
           <ul id="expense-list"></ul>
         </div>
       </div>
-      <p id="finance-percentage"></p>
+      <div class="finance-summary">
+        <p id="finance-percentage"></p>
+      </div>
       <button onclick="showFinanceLog()">Показать весь лог</button>
       <canvas id="finance-chart"></canvas>
     </section>
@@ -123,7 +218,7 @@
         <option value="plan">План</option>
         <option value="in-progress">В процессе</option>
         <option value="completed">Выполнено</option>
-        <option value="failed">Провалено</option>
+        <option value="failed">Провалвано</option>
       </select>
       <button onclick="addStrategy()">Добавить</button>
       <ul id="strategy-list"></ul>
@@ -133,7 +228,7 @@
     <section id="activity">
       <h2>Лог активности</h2>
       <button onclick="toggleActivityLog()">Показать/Скрыть</button>
-      <ul id="activity-list"></ul>
+      <ul id="activity-list" style="display: none;"></ul>
       <button onclick="undoLastAction()">Отменить</button>
       <canvas id="activity-chart"></canvas>
     </section>
@@ -141,6 +236,7 @@
     <!-- Теневая аналитика -->
     <section id="analytics">
       <h2>Теневая аналитика</h2>
+      <button onclick="renderAnalytics()">Обновить аналитику</button>
       <div id="analytics-results"></div>
     </section>
 
@@ -152,7 +248,339 @@
     </section>
   </div>
 
-  <script src="lib/chart.min.js"></script>
-  <script src="js/main.js" type="module"></script>
-</body>
-</html>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // Общая функция логирования активности
+    function logActivity(action) {
+      try {
+        const activity = JSON.parse(localStorage.getItem('activityLog') || '[]');
+        activity.push({ date: new Date().toISOString(), action });
+        localStorage.setItem('activityLog', JSON.stringify(activity));
+        renderActivity();
+      } catch (e) {
+        console.error('Ошибка логирования:', e);
+      }
+    }
+
+    // Состояние
+    function initState() {
+      const stateSelect = document.getElementById('state-select');
+      const savedState = localStorage.getItem('userState') || 'focus';
+      stateSelect.value = savedState;
+
+      window.updateState = () => {
+        const state = stateSelect.value;
+        localStorage.setItem('userState', state);
+        logActivity(`Изменено состояние: ${state}`);
+        renderAnalytics();
+      };
+    }
+
+    // Правило дня
+    const defaultRules = [
+      'Контроль над собой — контроль над всем',
+      'Делай сегодня то, что можешь отложить на завтра',
+      'Каждый шаг приближает к цели',
+      'Будь гибким, но не ломайся',
+      'Сила в простоте',
+      'Ошибки — это уроки',
+      'Действуй, а не мечтай',
+      'Будь готов к переменам',
+      'Цени время, оно не возвращается',
+      'Слушай больше, говори меньше'
+    ];
+
+    function initRule() {
+      const ruleText = document.getElementById('rule-text');
+      const newRuleInput = document.getElementById('new-rule');
+      let rules = JSON.parse(localStorage.getItem('rules') || '[]').concat(defaultRules);
+      let currentRuleIndex = 0;
+
+      const displayRule = () => {
+        ruleText.textContent = rules[currentRuleIndex] || 'Нет правил';
+      };
+
+      window.addRule = () => {
+        const newRule = newRuleInput.value.trim();
+        if (newRule) {
+          rules.push(newRule);
+          localStorage.setItem('rules', JSON.stringify(rules));
+          newRuleInput.value = '';
+          displayRule();
+          logActivity(`Добавлено правило: ${newRule}`);
+        }
+      };
+
+      window.nextRule = () => {
+        currentRuleIndex = (currentRuleIndex + 1) % rules.length;
+        displayRule();
+        logActivity('Переключено правило');
+      };
+
+      displayRule();
+    }
+
+    // План на день
+    function initPlan() {
+      const taskInput = document.getElementById('task-input');
+      const reminderTime = document.getElementById('reminder-time');
+      const taskList = document.getElementById('task-list');
+      let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+
+      const renderTasks = () => {
+        taskList.innerHTML = '';
+        tasks.forEach((task, index) => {
+          const li = document.createElement('li');
+          li.innerHTML = `
+            <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${index})">
+            ${task.text} (${task.time || 'без времени'})
+            <button onclick="deleteTask(${index})">❌</button>
+          `;
+          taskList.appendChild(li);
+        });
+      };
+
+      window.addTask = () => {
+        const text = taskInput.value.trim();
+        const time = reminderTime.value;
+        if (text) {
+          tasks.push({ text, time, completed: false, created: new Date().toISOString() });
+          localStorage.setItem('tasks', JSON.stringify(tasks));
+          taskInput.value = '';
+          reminderTime.value = '';
+          renderTasks();
+          logActivity(`Добавлена задача: ${text}`);
+          if (time) scheduleNotification(text, time);
+        }
+      };
+
+      window.toggleTask = (index) => {
+        tasks[index].completed = !tasks[index].completed;
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+        renderTasks();
+        logActivity(`Задача "${tasks[index].text}" ${tasks[index].completed ? 'выполнена' : 'не выполнена'}`);
+      };
+
+      window.deleteTask = (index) => {
+        const taskText = tasks[index].text;
+        tasks.splice(index, 1);
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+        renderTasks();
+        logActivity(`Удалена задача: ${taskText}`);
+      };
+
+      function scheduleNotification(text, time) {
+        const [hours, minutes] = time.split(':').map(Number);
+        const now = new Date();
+        const notificationTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+        const delay = notificationTime - now;
+        if (delay > 0) {
+          setTimeout(() => {
+            if (Notification.permission === 'granted') {
+              new Notification(text);
+            }
+          }, delay);
+        }
+      }
+
+      renderTasks();
+    }
+
+    // Напоминания
+    function initReminders() {
+      const reminderTimeInput = document.getElementById('reminder-time-input');
+      const reminderTextInput = document.getElementById('reminder-text');
+      const reminderList = document.getElementById('reminder-list');
+      let reminders = JSON.parse(localStorage.getItem('reminders') || '[]');
+
+      const renderReminders = () => {
+        reminderList.innerHTML = '';
+        reminders.forEach((reminder, index) => {
+          const li = document.createElement('li');
+          li.innerHTML = `${reminder.time} - ${reminder.text} <button onclick="deleteReminder(${index})">❌</button>`;
+          reminderList.appendChild(li);
+        });
+      };
+
+      window.addReminder = () => {
+        const time = reminderTimeInput.value;
+        const text = reminderTextInput.value.trim();
+        if (time && text) {
+          reminders.push({ time, text });
+          localStorage.setItem('reminders', JSON.stringify(reminders));
+          reminderTimeInput.value = '';
+          reminderTextInput.value = '';
+          renderReminders();
+          logActivity(`Добавлено напоминание: ${text}`);
+          scheduleNotification(text, time);
+        }
+      };
+
+      window.deleteReminder = (index) => {
+        const reminderText = reminders[index].text;
+        reminders.splice(index, 1);
+        localStorage.setItem('reminders', JSON.stringify(reminders));
+        renderReminders();
+        logActivity(`Удалено напоминание: ${reminderText}`);
+      };
+
+      function scheduleNotification(text, time) {
+        const [hours, minutes] = time.split(':').map(Number);
+        const now = new Date();
+        const notificationTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+        const delay = notificationTime - now;
+        if (delay > 0) {
+          setTimeout(() => {
+            if (Notification.permission === 'granted') {
+              new Notification(text);
+            }
+          }, delay);
+        }
+      }
+
+      renderReminders();
+
+      if (Notification.permission !== 'granted') {
+        Notification.requestPermission();
+      }
+    }
+
+    // Окружение
+    function initEnvironment() {
+      const personName = document.getElementById('person-name');
+      const personStatus = document.getElementById('person-status');
+      const personTags = document.getElementById('person-tags');
+      const personKarma = document.getElementById('person-karma');
+      const personList = document.getElementById('person-list');
+      let people = JSON.parse(localStorage.getItem('people') || '[]');
+
+      const renderPeople = () => {
+        personList.innerHTML = '';
+        people.forEach((person, index) => {
+          const li = document.createElement('li');
+          li.innerHTML = `
+            ${person.name} (${person.status}, Карма: ${person.karma}, Метки: ${person.tags.join(', ')})
+            <button onclick="adjustKarma(${index}, 10)">+10</button>
+            <button onclick="adjustKarma(${index}, -10)">-10</button>
+            <button onclick="deletePerson(${index})">❌</button>
+          `;
+          personList.appendChild(li);
+        });
+        updateStrategyPeopleSelect();
+      };
+
+      window.addPerson = () => {
+        const name = personName.value.trim();
+        const status = personStatus.value;
+        const tags = Array.from(personTags.selectedOptions).map(opt => opt.value);
+        const karma = parseInt(personKarma.value) || 0;
+        if (name) {
+          people.push({ name, status, tags, karma });
+          localStorage.setItem('people', JSON.stringify(people));
+          personName.value = '';
+          personTags.value = '';
+          personKarma.value = '0';
+          renderPeople();
+          logActivity(`Добавлен человек: ${name}`);
+          renderAnalytics();
+        }
+      };
+
+      window.adjustKarma = (index, change) => {
+        people[index].karma = Math.max(-100, Math.min(100, people[index].karma + change));
+        localStorage.setItem('people', JSON.stringify(people));
+        renderPeople();
+        logActivity(`Изменена карма для ${people[index].name}: ${people[index].karma}`);
+        renderAnalytics();
+      };
+
+      window.deletePerson = (index) => {
+        const name = people[index].name;
+        people.splice(index, 1);
+        localStorage.setItem('people', JSON.stringify(people));
+        renderPeople();
+        logActivity(`Удалён человек: ${name}`);
+        renderAnalytics();
+      };
+
+      renderPeople();
+    }
+
+    // Физо
+    function initFitness() {
+      const exerciseType = document.getElementById('exercise-type');
+      const exerciseResult = document.getElementById('exercise-result');
+      const exerciseList = document.getElementById('exercise-list');
+      const fitnessChart = document.getElementById('fitness-chart').getContext('2d');
+      let exercises = JSON.parse(localStorage.getItem('exercises') || '[]');
+      let chart;
+
+      const renderExercises = () => {
+        exerciseList.innerHTML = '';
+        exercises.forEach((exercise, index) => {
+          const li = document.createElement('li');
+          li.innerHTML = `${exercise.type}: ${exercise.result} (${new Date(exercise.date).toLocaleDateString()}) <button onclick="deleteExercise(${index})">❌</button>`;
+          exerciseList.appendChild(li);
+        });
+        updateFitnessChart();
+      };
+
+      window.addExercise = () => {
+        const type = exerciseType.value.trim();
+        const result = parseFloat(exerciseResult.value);
+        if (type && !isNaN(result)) {
+          exercises.push({ type, result, date: new Date().toISOString() });
+          localStorage.setItem('exercises', JSON.stringify(exercises));
+          exerciseType.value = '';
+          exerciseResult.value = '';
+          renderExercises();
+          logActivity(`Добавлено упражнение: ${type}, ${result}`);
+        }
+      };
+
+      window.deleteExercise = (index) => {
+        const exerciseType = exercises[index].type;
+        exercises.splice(index, 1);
+        localStorage.setItem('exercises', JSON.stringify(exercises));
+        renderExercises();
+        logActivity(`Удалено упражнение: ${exerciseType}`);
+      };
+
+      function updateFitnessChart() {
+        const types = [...new Set(exercises.map(ex => ex.type))];
+        const datasets = types.map(type => ({
+          label: type,
+          data: exercises.filter(ex => ex.type === type).map(ex => ex.result),
+          backgroundColor: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.5)`
+        }));
+
+        if (chart) chart.destroy();
+        chart = new Chart(fitnessChart, {
+          type: 'bar',
+          data: {
+            labels: exercises.map(ex => new Date(ex.date).toLocaleDateString()),
+            datasets
+          },
+          options: { scales: { y: { beginAtZero: true } } }
+        });
+      }
+
+      renderExercises();
+    }
+
+    // Доходы и расходы
+    function initFinance() {
+      const amountInput = document.getElementById('transaction-amount');
+      const typeSelect = document.getElementById('transaction-type');
+      const descriptionInput = document.getElementById('transaction-description');
+      const incomeList = document.getElementById('income-list');
+      const expenseList = document.getElementById('expense-list');
+      const percentageText = document.getElementById('finance-percentage');
+      const financeChart = document.getElementById('finance-chart').getContext('2d');
+      let transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+      let chart;
+
+      const renderTransactions = () => {
+        incomeList.innerHTML = '';
+        expenseList.innerHTML = '';
+        
