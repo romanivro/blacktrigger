@@ -2,23 +2,7 @@ const CACHE_NAME = 'productivity-v1';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/css/styles.css',
-  '/js/main.js',
-  '/js/state.js',
-  '/js/rule.js',
-  '/js/plan.js',
-  '/js/reminders.js',
-  '/js/environment.js',
-  '/js/fitness.js',
-  '/js/finance.js',
-  '/js/archetypes.js',
-  '/js/strategy.js',
-  '/js/activity.js',
-  '/js/analytics.js',
-  '/js/settings.js',
-  '/lib/chart.min.js',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png'
+  'https://cdn.jsdelivr.net/npm/chart.js'
 ];
 
 self.addEventListener('install', event => {
