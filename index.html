@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Продуктивность</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" href="icons/icon-192.png">
+</head>
+<body>
+  <div class="container">
+    <!-- Состояние -->
+    <section id="state">
+      <h2>Состояние</h2>
+      <select id="state-select">
+        <option value="focus">⚖️ В фокусе</option>
+        <option value="fatigue">⚡️ Усталость</option>
+        <option value="uplift">🚀 Подъём</option>
+      </select>
+      <button onclick="updateState()">Обновить</button>
+    </section>
+
+    <!-- Правило дня -->
+    <section id="rule">
+      <h2>Правило дня</h2>
+      <p id="rule-text"></p>
+      <input type="text" id="new-rule" placeholder="Новое правило">
+      <button onclick="addRule()">Добавить правило</button>
+      <button onclick="nextRule()">Следующее правило</button>
+    </section>
+
+    <!-- План на день -->
+    <section id="plan">
+      <h2>План на день</h2>
+      <input type="text" id="task-input" placeholder="Новая задача">
+      <input type="time" id="reminder-time">
+      <button onclick="addTask()">Добавить</button>
+      <ul id="task-list"></ul>
+    </section>
+
+    <!-- Напоминания -->
+    <section id="reminders">
+      <h2>Напоминания</h2>
+      <input type="time" id="reminder-time-input">
+      <input type="text" id="reminder-text" placeholder="Текст напоминания">
+      <button onclick="addReminder()">Добавить</button>
+      <ul id="reminder-list"></ul>
+    </section>
+
+    <!-- Окружение -->
+    <section id="environment">
+      <h2>Окружение</h2>
+      <input type="text" id="person-name" placeholder="Имя">
+      <select id="person-status">
+        <option value="loyal">Лояльный</option>
+        <option value="neutral">Нейтрал</option>
+        <option value="enemy">Враг</option>
+        <option value="contract">Контракт</option>
+      </select>
+      <input type="text" id="person-tags" placeholder="Метки (через запятую)">
+      <input type="number" id="person-karma" min="-100" max="100" step="10" value="0">
+      <button onclick="addPerson()">Добавить</button>
+      <ul id="person-list"></ul>
+      <div id="network-graph"></div>
+    </section>
+
+    <!-- Физо -->
+    <section id="fitness">
+      <h2>Физо</h2>
+      <input type="text" id="exercise-type" placeholder="Тип упражнения">
+      <input type="number" id="exercise-result" placeholder="Результат">
+      <button onclick="addExercise()">Записать</button>
+      <ul id="exercise-list"></ul>
+      <canvas id="fitness-chart"></canvas>
+    </section>
+
+    <!-- Доходы и расходы -->
+    <section id="finance">
+      <h2>Доходы и расходы</h2>
+      <input type="number" id="transaction-amount" placeholder="Сумма">
+      <select id="transaction-type">
+        <option value="income">Доход</option>
+        <option value="expense">Расход</option>
+      </select>
+      <input type="text" id="transaction-description" placeholder="Описание">
+      <button onclick="addTransaction()">Записать</button>
+      <div class="finance-columns">
+        <div>
+          <h3>Доходы</h3>
+          <ul id="income-list"></ul>
+        </div>
+        <div>
+          <h3>Расходы</h3>
+          <ul id="expense-list"></ul>
+        </div>
+      </div>
+      <p id="finance-percentage"></p>
+      <button onclick="showFinanceLog()">Показать весь лог</button>
+      <canvas id="finance-chart"></canvas>
+    </section>
+
+    <!-- Архетипы -->
+    <section id="archetypes">
+      <h2>Архетипы</h2>
+      <div id="questions"></div>
+      <button onclick="submitArchetype()">Определить</button>
+      <p id="archetype-result"></p>
+      <button onclick="resetArchetype()">Сбросить</button>
+    </section>
+
+    <!-- Карта стратегии -->
+    <section id="strategy">
+      <h2>Карта стратегии</h2>
+      <input type="text" id="strategy-goal" placeholder="Цель">
+      <input type="text" id="strategy-levers" placeholder="Рычаги">
+      <input type="text" id="strategy-resources" placeholder="Ресурсы">
+      <input type="text" id="strategy-obstacles" placeholder="Препятствия">
+      <input type="text" id="strategy-mechanisms" placeholder="Механизмы">
+      <select id="strategy-people"></select>
+      <select id="strategy-status">
+        <option value="plan">План</option>
+        <option value="in-progress">В процессе</option>
+        <option value="completed">Выполнено</option>
+        <option value="failed">Провалено</option>
+      </select>
+      <button onclick="addStrategy()">Добавить</button>
+      <ul id="strategy-list"></ul>
+    </section>
+
+    <!-- Лог активности -->
+    <section id="activity">
+      <h2>Лог активности</h2>
+      <button onclick="toggleActivityLog()">Показать/Скрыть</button>
+      <ul id="activity-list"></ul>
+      <button onclick="undoLastAction()">Отменить</button>
+      <canvas id="activity-chart"></canvas>
+    </section>
+
+    <!-- Теневая аналитика -->
+    <section id="analytics">
+      <h2>Теневая аналитика</h2>
+      <div id="analytics-results"></div>
+    </section>
+
+    <!-- Настройки -->
+    <section id="settings">
+      <h2>Настройки</h2>
+      <input type="file" id="background-image" accept="image/*">
+      <button onclick="setBackground()">Установить фон</button>
+    </section>
+  </div>
+
+  <script src="lib/chart.min.js"></script>
+  <script src="js/main.js" type="module"></script>
+</body>
+</html>
