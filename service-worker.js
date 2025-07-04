@@ -1,9 +1,7 @@
-const CACHE_NAME = 'productivity-v3'; // Уникальное имя кэша для сброса старых данных
+const CACHE_NAME = 'productivity-v3';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'
 ];
 
