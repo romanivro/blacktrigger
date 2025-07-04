@@ -2,7 +2,7 @@ const CACHE_NAME = 'productivity-v1';
 const urlsToCache = [
   '/',
   '/index.html',
-  'https://cdn.jsdelivr.net/npm/chart.js'
+  'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'
 ];
 
 self.addEventListener('install', event => {
