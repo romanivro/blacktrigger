@@ -583,4 +583,426 @@
       const renderTransactions = () => {
         incomeList.innerHTML = '';
         expenseList.innerHTML = '';
-        
+        const last30Days = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        const recentTransactions = transactions.filter(t => new Date(t.date) >= last30Days);
+
+        recentTransactions.forEach((transaction, index) => {
+          const li = document.createElement('li');
+          li.innerHTML = `${transaction.amount} - ${transaction.description} <button onclick="deleteTransaction(${index})">❌</button>`;
+          if (transaction.type === 'income') {
+            incomeList.appendChild(li);
+          } else {
+            expenseList.appendChild(li);
+          }
+        });
+
+        const income = recentTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+        const expense = recentTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+        const total = income + expense;
+        const percentage = total ? (income / total * 100).toFixed(2) : 0;
+        percentageText.textContent = `Доходы: ${income}, Расходы: ${expense}, Процент: ${percentage}%`;
+        percentageText.style.color = percentage > 50 ? 'green' : percentage === 50 ? 'yellow' : 'red';
+
+        updateFinanceChart();
+      };
+
+      window.addTransaction = () => {
+        const amount = parseFloat(amountInput.value);
+        const type = typeSelect.value;
+        const description = descriptionInput.value.trim();
+        if (!isNaN(amount) && description) {
+          transactions.push({ amount, type, description, date: new Date().toISOString() });
+          localStorage.setItem('transactions', JSON.stringify(transactions));
+          amountInput.value = '';
+          descriptionInput.value = '';
+          renderTransactions();
+          logActivity(`Добавлена транзакция: ${type}, ${amount}`);
+          renderAnalytics();
+        }
+      };
+
+      window.deleteTransaction = (index) => {
+        const transaction = transactions[index];
+        transactions.splice(index, 1);
+        localStorage.setItem('transactions', JSON.stringify(transactions));
+        renderTransactions();
+        logActivity(`Удалена транзакция: ${transaction.type}, ${transaction.amount}`);
+        renderAnalytics();
+      };
+
+      window.showFinanceLog = () => {
+        alert(JSON.stringify(transactions, null, 2));
+        logActivity('Просмотрен лог транзакций');
+      };
+
+      function updateFinanceChart() {
+        const dates = [...new Set(transactions.map(t => new Date(t.date).toLocaleDateString()))];
+        const incomeData = dates.map(date => {
+          return transactions
+            .filter(t => t.type === 'income' && new Date(t.date).toLocaleDateString() === date)
+            .reduce((sum, t) => sum + t.amount, 0);
+        });
+        const expenseData = dates.map(date => {
+          return transactions
+            .filter(t => t.type === 'expense' && new Date(t.date).toLocaleDateString() === date)
+            .reduce((sum, t) => sum + t.amount, 0);
+        });
+
+        if (chart) chart.destroy();
+        chart = new Chart(financeChart, {
+          type: 'line',
+          data: {
+            labels: dates,
+            datasets: [
+              { label: 'Доходы', data: incomeData, borderColor: 'green', fill: false },
+              { label: 'Расходы', data: expenseData, borderColor: 'red', fill: false }
+            ]
+          },
+          options: { scales: { y: { beginAtZero: true } } }
+        });
+      }
+
+      renderTransactions();
+    }
+
+    // Архетипы
+    const questions = [
+      { text: 'Как вы принимаете решения?', options: ['Анализирую данные', 'Слушаю интуицию', 'Советуюсь с другими'] },
+      { text: 'В конфликте вы:', options: ['Идёте на компромисс', 'Настаиваете на своём', 'Избегаете'] },
+      { text: 'Ваша цель:', options: ['Достичь власти', 'Создать гармонию', 'Решать задачи'] },
+      { text: 'Ваше отношение к риску:', options: ['Люблю риск', 'Избегаю риск', 'Рискую с расчетом'] },
+      { text: 'Ваша роль в команде:', options: ['Лидер', 'Исполнитель', 'Искры идей'] }
+    ];
+
+    const archetypes = ['Хищник', 'Стратег', 'Провокатор', 'Оракул', 'Исполнитель', 'Медиатор'];
+
+    function initArchetypes() {
+      const questionsDiv = document.getElementById('questions');
+      const resultText = document.getElementById('archetype-result');
+      let answers = JSON.parse(localStorage.getItem('archetypeAnswers') || '[]');
+
+      const renderQuestions = () => {
+        questionsDiv.innerHTML = '';
+        questions.forEach((q, index) => {
+          const div = document.createElement('div');
+          div.innerHTML = `<p>${q.text}</p>`;
+          q.options.forEach((option, i) => {
+            const button = document.createElement('button');
+            button.textContent = option;
+            button.onclick = () => selectAnswer(index, i);
+            div.appendChild(button);
+          });
+          questionsDiv.appendChild(div);
+        });
+      };
+
+      window.selectAnswer = (questionIndex, optionIndex) => {
+        answers[questionIndex] = optionIndex;
+        localStorage.setItem('archetypeAnswers', JSON.stringify(answers));
+        logActivity(`Выбран ответ на вопрос ${questionIndex + 1}`);
+        renderQuestions();
+        // Подсветка выбранного ответа
+        const buttons = questionsDiv.children[questionIndex].getElementsByTagName('button');
+        for (let btn of buttons) btn.style.background = '#007bff';
+        buttons[optionIndex].style.background = '#0056b3';
+      };
+
+      window.submitArchetype = () => {
+        if (answers.length === questions.length) {
+          // Упрощённая логика определения архетипа
+          const score = answers.reduce((sum, val) => sum + val, 0);
+          const archetype = archetypes[Math.floor(score % archetypes.length)];
+          resultText.textContent = `Ваш архетип: ${archetype}. Рекомендация: ${getArchetypeRecommendation(archetype)}`;
+          localStorage.setItem('archetype', archetype);
+          logActivity(`Определён архетип: ${archetype}`);
+        } else {
+          alert('Ответьте на все вопросы');
+        }
+      };
+
+      window.resetArchetype = () => {
+        answers = [];
+        localStorage.removeItem('archetypeAnswers');
+        localStorage.removeItem('archetype');
+        resultText.textContent = '';
+        renderQuestions();
+        logActivity('Сброшены результаты теста архетипов');
+      };
+
+      function getArchetypeRecommendation(archetype) {
+        const recommendations = {
+          'Хищник': 'Фокусируйтесь на лидерстве и контроле.',
+          'Стратег': 'Планируйте долгосрочные шаги.',
+          'Провокатор': 'Используйте энергию для вдохновения.',
+          'Оракул': 'Доверяйте интуиции.',
+          'Исполнитель': 'Сосредоточьтесь на выполнении задач.',
+          'Медиатор': 'Создавайте гармонию в команде.'
+        };
+        return recommendations[archetype] || 'Действуйте по ситуации.';
+      }
+
+      renderQuestions();
+      const savedArchetype = localStorage.getItem('archetype');
+      if (savedArchetype) {
+        resultText.textContent = `Ваш архетип: ${savedArchetype}. Рекомендация: ${getArchetypeRecommendation(savedArchetype)}`;
+      }
+    }
+
+    // Карта стратегии
+    function initStrategy() {
+      const goalInput = document.getElementById('strategy-goal');
+      const leversInput = document.getElementById('strategy-levers');
+      const resourcesInput = document.getElementById('strategy-resources');
+      const obstaclesInput = document.getElementById('strategy-obstacles');
+      const mechanismsInput = document.getElementById('strategy-mechanisms');
+      const peopleSelect = document.getElementById('strategy-people');
+      const statusSelect = document.getElementById('strategy-status');
+      const strategyList = document.getElementById('strategy-list');
+      let strategies = JSON.parse(localStorage.getItem('strategies') || '[]');
+
+      window.updateStrategyPeopleSelect = () => {
+        const people = JSON.parse(localStorage.getItem('people') || '[]');
+        peopleSelect.innerHTML = '<option value="">Выберите человека</option>';
+        people.forEach(person => {
+          const option = document.createElement('option');
+          option.value = person.name;
+          option.textContent = person.name;
+          peopleSelect.appendChild(option);
+        });
+      };
+
+      const renderStrategies = () => {
+        strategyList.innerHTML = '';
+        strategies.forEach((strategy, index) => {
+          const li = document.createElement('li');
+          li.innerHTML = `
+            ${strategy.goal} (${strategy.status}, Люди: ${strategy.people || 'нет'})
+            <button onclick="deleteStrategy(${index})">❌</button>
+          `;
+          strategyList.appendChild(li);
+        });
+      };
+
+      window.addStrategy = () => {
+        const goal = goalInput.value.trim();
+        const levers = leversInput.value.trim();
+        const resources = resourcesInput.value.trim();
+        const obstacles = obstaclesInput.value.trim();
+        const mechanisms = mechanismsInput.value.trim();
+        const people = peopleSelect.value;
+        const status = statusSelect.value;
+        if (goal) {
+          strategies.push({ goal, levers, resources, obstacles, mechanisms, people, status });
+          localStorage.setItem('strategies', JSON.stringify(strategies));
+          goalInput.value = '';
+          leversInput.value = '';
+          resourcesInput.value = '';
+          obstaclesInput.value = '';
+          mechanismsInput.value = '';
+          peopleSelect.value = '';
+          renderStrategies();
+          logActivity(`Добавлена стратегия: ${goal}`);
+          renderAnalytics();
+        } else {
+          alert('Введите цель стратегии');
+        }
+      };
+
+      window.deleteStrategy = (index) => {
+        const goal = strategies[index].goal;
+        strategies.splice(index, 1);
+        localStorage.setItem('strategies', JSON.stringify(strategies));
+        renderStrategies();
+        logActivity(`Удалена стратегия: ${goal}`);
+        renderAnalytics();
+      };
+
+      updateStrategyPeopleSelect();
+      renderStrategies();
+    }
+
+    // Лог активности
+    function initActivity() {
+      const activityList = document.getElementById('activity-list');
+      const activityChart = document.getElementById('activity-chart').getContext('2d');
+      let activity = JSON.parse(localStorage.getItem('activityLog') || '[]');
+      let chart;
+
+      window.renderActivity = () => {
+        activityList.innerHTML = '';
+        activity.forEach((log, index) => {
+          const li = document.createElement('li');
+          li.textContent = `${new Date(log.date).toLocaleString()} - ${log.action}`;
+          activityList.appendChild(li);
+        });
+        updateActivityChart();
+      };
+
+      window.toggleActivityLog = () => {
+        activityList.style.display = activityList.style.display === 'none' ? 'block' : 'none';
+        logActivity('Переключён лог активности');
+      };
+
+      window.undoLastAction = () => {
+        if (activity.length > 0) {
+          const lastAction = activity.pop();
+          localStorage.setItem('activityLog', JSON.stringify(activity));
+          renderActivity();
+          logActivity(`Отменено действие: ${lastAction.action}`);
+        }
+      };
+
+      function updateActivityChart() {
+        const dates = [...new Set(activity.map(log => new Date(log.date).toLocaleDateString()))];
+        const data = dates.map(date => {
+          return activity.filter(log => new Date(log.date).toLocaleDateString() === date).length;
+        });
+
+        if (chart) chart.destroy();
+        chart = new Chart(activityChart, {
+          type: 'bar',
+          data: {
+            labels: dates,
+            datasets: [{ label: 'Активность', data, backgroundColor: 'rgba(0, 123, 255, 0.5)' }]
+          },
+          options: { scales: { y: { beginAtZero: true } } }
+        });
+      }
+
+      renderActivity();
+    }
+
+// Теневая аналитика
+    function initAnalytics() {
+      const analyticsResults = document.getElementById('analytics-results');
+
+      window.renderAnalytics = () => {
+        const tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+        const people = JSON.parse(localStorage.getItem('people') || '[]');
+        const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+        const state = localStorage.getItem('userState') || 'focus';
+        const now = new Date();
+        const threeDaysAgo = new Date(now - 3 * 24 * 60 * 60 * 1000);
+
+        let results = '<h3>Аналитика</h3><ul>';
+
+        // Невыполненные задачи
+        const overdueTasks = tasks.filter(task => !task.completed && new Date(task.created) < threeDaysAgo);
+        if (overdueTasks.length > 0) {
+          results += `<li>Невыполненные задачи (>3 дней): ${overdueTasks.map(t => t.text).join(', ')}</li>`;
+        } else {
+          results += '<li>Нет просроченных задач</li>';
+        }
+
+        // Люди с отрицательной кармой
+        const negativeKarma = people.filter(p => p.karma < 0);
+        if (negativeKarma.length > 0) {
+          results += `<li>Люди с отрицательной кармой: ${negativeKarma.map(p => `${p.name} (${p.karma})`).join(', ')}</li>`;
+        } else {
+          results += '<li>Нет людей с отрицательной кармой</li>';
+        }
+
+        // Рекомендации по людям на основе меток
+        const tagRecommendations = {
+          '💰 Ресурс': 'Поддерживайте тесный контакт для получения ресурсов.',
+          '🪨 Балласт': 'Сведите контакты к минимуму.',
+          '🧠 Внушаемый': 'Используйте для продвижения своих идей.',
+          '🗣️ Болтун': 'Будьте осторожны с конфиденциальной информацией.',
+          '✝️ Религиозный': 'Уважайте убеждения, избегайте споров.',
+          '🧩 Манипулятор': 'Контролируйте взаимодействие, избегайте манипуляций.',
+          '🧲 Завистливый': 'Не делитесь успехами открыто.',
+          '🦊 Хитрый': 'Проверяйте намерения и действия.'
+        };
+
+        people.forEach(person => {
+          person.tags.forEach(tag => {
+            if (tagRecommendations[tag]) {
+              results += `<li>Рекомендация для ${person.name} (${tag}): ${tagRecommendations[tag]}</li>`;
+            }
+          });
+        });
+
+        // Влияние состояния
+        results += `<li>Текущее состояние: ${state}. Рекомендация: ${state === 'fatigue' ? 'Отдохните' : 'Продолжайте в том же духе'}</li>`;
+
+        // Финансовая эффективность
+        const last30Days = new Date(now - 30 * 24 * 60 * 60 * 1000);
+        const recentTransactions = transactions.filter(t => new Date(t.date) >= last30Days);
+        const income = recentTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+        const expense = recentTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+        const total = income + expense;
+        const percentage = total ? (income / total * 100).toFixed(2) : 0;
+        results += `<li>Финансовая эффективность: ${percentage}% (${percentage > 50 ? 'Хорошо' : 'Требует внимания'})</li>`;
+
+        results += '</ul>';
+        analyticsResults.innerHTML = results;
+        logActivity('Обновлена аналитика');
+      };
+
+      renderAnalytics();
+    }
+
+    // Настройки
+    function initSettings() {
+      const backgroundInput = document.getElementById('background-image');
+
+      window.setBackground = () => {
+        const file = backgroundInput.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            document.body.style.backgroundImage = `url(${reader.result})`;
+            localStorage.setItem('background', reader.result);
+            logActivity('Изменён фон');
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+
+      const savedBackground = localStorage.getItem('background');
+      if (savedBackground) {
+        document.body.style.backgroundImage = `url(${savedBackground})`;
+      }
+    }
+
+    // Критические уведомления
+    function checkInactivity() {
+      const activity = JSON.parse(localStorage.getItem('activityLog') || '[]');
+      const lastActivity = activity.length > 0 ? new Date(activity[activity.length - 1].date) : new Date();
+      const now = new Date();
+      const threeDays = 3 * 24 * 60 * 60 * 1000;
+      if (now - lastActivity > threeDays && Notification.permission === 'granted') {
+        new Notification('Вы неактивны 3 дня! Вернитесь к задачам.');
+      }
+      setTimeout(checkInactivity, 24 * 60 * 60 * 1000);
+    }
+
+    // Инициализация
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        initState();
+        initRule();
+        initPlan();
+        initReminders();
+        initEnvironment();
+        initFitness();
+        initFinance();
+        initArchetypes();
+        initStrategy();
+        initActivity();
+        initAnalytics();
+        initSettings();
+        checkInactivity();
+
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then(reg => console.log('Service Worker registered', reg))
+            .catch(err => console.error('Service Worker registration failed', err));
+        }
+      } catch (e) {
+        console.error('Ошибка инициализации:', e);
+      }
+    });
+  </script>
+</body>
+</html>
