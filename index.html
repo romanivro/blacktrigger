@@ -6,7 +6,6 @@
   <title>Продуктивность</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#ffffff">
-  <link rel="icon" href="icons/icon-192.png">
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -64,6 +63,10 @@
     li {
       padding: 10px;
       border-bottom: 1px solid #eee;
+    }
+    select[multiple] {
+      width: 200px;
+      height: 100px;
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -156,7 +159,7 @@
       <input type="number" id="person-karma" min="-100" max="100" step="10" value="0">
       <button onclick="addPerson()">Добавить</button>
       <ul id="person-list"></ul>
-    section>
+    </section>
 
     <!-- Физо -->
     <section id="fitness">
@@ -165,13 +168,13 @@
       <input type="number" id="exercise-result" placeholder="Результат">
       <button onclick="addExercise()">Записать</button>
       <ul id="exercise-list"></ul>
-      <canvas id="fitness-chart"></canvas>
+      <canvas id="fitness-chart" height="100"></canvas>
     </section>
 
     <!-- Доходы и расходы -->
     <section id="finance">
       <h2>Доходы и расходы</h2>
-      <input type="number" id="transaction-amount" placeholder="Сумма">
+      <input type="number" id="transaction-amount" placeholder="Сумма" min="0">
       <select id="transaction-type">
         <option value="income">Доход</option>
         <option value="expense">Расход</option>
@@ -193,7 +196,7 @@
         <p id="finance-percentage"></p>
       </div>
       <button onclick="showFinanceLog()">Показать весь лог</button>
-      <canvas id="finance-chart"></canvas>
+      <canvas id="finance-chart" height="100"></canvas>
     </section>
 
     <!-- Архетипы -->
@@ -213,12 +216,14 @@
       <input type="text" id="strategy-resources" placeholder="Ресурсы">
       <input type="text" id="strategy-obstacles" placeholder="Препятствия">
       <input type="text" id="strategy-mechanisms" placeholder="Механизмы">
-      <select id="strategy-people"></select>
+      <select id="strategy-people">
+        <option value="">Выберите человека</option>
+      </select>
       <select id="strategy-status">
         <option value="plan">План</option>
         <option value="in-progress">В процессе</option>
         <option value="completed">Выполнено</option>
-        <option value="failed">Провалвано</option>
+        <option value="failed">Провалено</option>
       </select>
       <button onclick="addStrategy()">Добавить</button>
       <ul id="strategy-list"></ul>
@@ -230,7 +235,7 @@
       <button onclick="toggleActivityLog()">Показать/Скрыть</button>
       <ul id="activity-list" style="display: none;"></ul>
       <button onclick="undoLastAction()">Отменить</button>
-      <canvas id="activity-chart"></canvas>
+      <canvas id="activity-chart" height="100"></canvas>
     </section>
 
     <!-- Теневая аналитика -->
@@ -248,9 +253,9 @@
     </section>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script>
-    // Общая функция логирования активности
+    // Общая функция логирования
     function logActivity(action) {
       try {
         const activity = JSON.parse(localStorage.getItem('activityLog') || '[]');
@@ -283,11 +288,11 @@
       'Каждый шаг приближает к цели',
       'Будь гибким, но не ломайся',
       'Сила в простоте',
+      'Слушай больше, говори меньше',
       'Ошибки — это уроки',
       'Действуй, а не мечтай',
       'Будь готов к переменам',
-      'Цени время, оно не возвращается',
-      'Слушай больше, говори меньше'
+      'Цени время, оно не возвращается'
     ];
 
     function initRule() {
@@ -351,6 +356,7 @@
           renderTasks();
           logActivity(`Добавлена задача: ${text}`);
           if (time) scheduleNotification(text, time);
+          renderAnalytics();
         }
       };
 
@@ -359,6 +365,7 @@
         localStorage.setItem('tasks', JSON.stringify(tasks));
         renderTasks();
         logActivity(`Задача "${tasks[index].text}" ${tasks[index].completed ? 'выполнена' : 'не выполнена'}`);
+        renderAnalytics();
       };
 
       window.deleteTask = (index) => {
@@ -367,6 +374,7 @@
         localStorage.setItem('tasks', JSON.stringify(tasks));
         renderTasks();
         logActivity(`Удалена задача: ${taskText}`);
+        renderAnalytics();
       };
 
       function scheduleNotification(text, time) {
@@ -439,7 +447,6 @@
       }
 
       renderReminders();
-
       if (Notification.permission !== 'granted') {
         Notification.requestPermission();
       }
@@ -459,7 +466,7 @@
         people.forEach((person, index) => {
           const li = document.createElement('li');
           li.innerHTML = `
-            ${person.name} (${person.status}, Карма: ${person.karma}, Метки: ${person.tags.join(', ')})
+            ${person.name} (${person.status}, Карма: ${person.karma}, Метки: ${person.tags.join(', ') || 'нет'})
             <button onclick="adjustKarma(${index}, 10)">+10</button>
             <button onclick="adjustKarma(${index}, -10)">-10</button>
             <button onclick="deletePerson(${index})">❌</button>
@@ -467,6 +474,7 @@
           personList.appendChild(li);
         });
         updateStrategyPeopleSelect();
+        renderAnalytics();
       };
 
       window.addPerson = () => {
@@ -482,7 +490,8 @@
           personKarma.value = '0';
           renderPeople();
           logActivity(`Добавлен человек: ${name}`);
-          renderAnalytics();
+        } else {
+          alert('Введите имя');
         }
       };
 
@@ -491,7 +500,6 @@
         localStorage.setItem('people', JSON.stringify(people));
         renderPeople();
         logActivity(`Изменена карма для ${people[index].name}: ${people[index].karma}`);
-        renderAnalytics();
       };
 
       window.deletePerson = (index) => {
@@ -500,7 +508,6 @@
         localStorage.setItem('people', JSON.stringify(people));
         renderPeople();
         logActivity(`Удалён человек: ${name}`);
-        renderAnalytics();
       };
 
       renderPeople();
@@ -535,6 +542,8 @@
           exerciseResult.value = '';
           renderExercises();
           logActivity(`Добавлено упражнение: ${type}, ${result}`);
+        } else {
+          alert('Введите тип и результат');
         }
       };
 
@@ -600,24 +609,26 @@
         const expense = recentTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
         const total = income + expense;
         const percentage = total ? (income / total * 100).toFixed(2) : 0;
-        percentageText.textContent = `Доходы: ${income}, Расходы: ${expense}, Процент: ${percentage}%`;
-        percentageText.style.color = percentage > 50 ? 'green' : percentage === 50 ? 'yellow' : 'red';
+        percentageText.textContent = `Доходы: ${income} | Расходы: ${expense} | ${percentage}%`;
+        percentageText.style.color = percentage > 50 ? 'green' : percentage == 50 ? 'yellow' : 'red';
 
         updateFinanceChart();
+        renderAnalytics();
       };
 
       window.addTransaction = () => {
         const amount = parseFloat(amountInput.value);
         const type = typeSelect.value;
         const description = descriptionInput.value.trim();
-        if (!isNaN(amount) && description) {
+        if (!isNaN(amount) && amount > 0 && description) {
           transactions.push({ amount, type, description, date: new Date().toISOString() });
           localStorage.setItem('transactions', JSON.stringify(transactions));
           amountInput.value = '';
           descriptionInput.value = '';
           renderTransactions();
           logActivity(`Добавлена транзакция: ${type}, ${amount}`);
-          renderAnalytics();
+        } else {
+          alert('Введите сумму (>0) и описание');
         }
       };
 
@@ -627,11 +638,11 @@
         localStorage.setItem('transactions', JSON.stringify(transactions));
         renderTransactions();
         logActivity(`Удалена транзакция: ${transaction.type}, ${transaction.amount}`);
-        renderAnalytics();
       };
 
       window.showFinanceLog = () => {
-        alert(JSON.stringify(transactions, null, 2));
+        const log = transactions.map(t => `${new Date(t.date).toLocaleString()}: ${t.type} - ${t.amount} (${t.description})`).join('\n');
+        alert(log || 'Лог пуст');
         logActivity('Просмотрен лог транзакций');
       };
 
@@ -689,6 +700,7 @@
           q.options.forEach((option, i) => {
             const button = document.createElement('button');
             button.textContent = option;
+            button.style.background = answers[index] === i ? '#0056b3' : '#007bff';
             button.onclick = () => selectAnswer(index, i);
             div.appendChild(button);
           });
@@ -701,15 +713,10 @@
         localStorage.setItem('archetypeAnswers', JSON.stringify(answers));
         logActivity(`Выбран ответ на вопрос ${questionIndex + 1}`);
         renderQuestions();
-        // Подсветка выбранного ответа
-        const buttons = questionsDiv.children[questionIndex].getElementsByTagName('button');
-        for (let btn of buttons) btn.style.background = '#007bff';
-        buttons[optionIndex].style.background = '#0056b3';
       };
 
       window.submitArchetype = () => {
         if (answers.length === questions.length) {
-          // Упрощённая логика определения архетипа
           const score = answers.reduce((sum, val) => sum + val, 0);
           const archetype = archetypes[Math.floor(score % archetypes.length)];
           resultText.textContent = `Ваш архетип: ${archetype}. Рекомендация: ${getArchetypeRecommendation(archetype)}`;
@@ -781,6 +788,7 @@
           `;
           strategyList.appendChild(li);
         });
+        renderAnalytics();
       };
 
       window.addStrategy = () => {
@@ -802,7 +810,6 @@
           peopleSelect.value = '';
           renderStrategies();
           logActivity(`Добавлена стратегия: ${goal}`);
-          renderAnalytics();
         } else {
           alert('Введите цель стратегии');
         }
@@ -814,7 +821,6 @@
         localStorage.setItem('strategies', JSON.stringify(strategies));
         renderStrategies();
         logActivity(`Удалена стратегия: ${goal}`);
-        renderAnalytics();
       };
 
       updateStrategyPeopleSelect();
@@ -872,7 +878,7 @@
       renderActivity();
     }
 
-// Теневая аналитика
+    // Теневая аналитика
     function initAnalytics() {
       const analyticsResults = document.getElementById('analytics-results');
 
@@ -888,30 +894,26 @@
 
         // Невыполненные задачи
         const overdueTasks = tasks.filter(task => !task.completed && new Date(task.created) < threeDaysAgo);
-        if (overdueTasks.length > 0) {
-          results += `<li>Невыполненные задачи (>3 дней): ${overdueTasks.map(t => t.text).join(', ')}</li>`;
-        } else {
-          results += '<li>Нет просроченных задач</li>';
-        }
+        results += overdueTasks.length > 0
+          ? `<li>Невыполненные задачи (>3 дней): ${overdueTasks.map(t => t.text).join(', ')}</li>`
+          : '<li>Нет просроченных задач</li>';
 
         // Люди с отрицательной кармой
         const negativeKarma = people.filter(p => p.karma < 0);
-        if (negativeKarma.length > 0) {
-          results += `<li>Люди с отрицательной кармой: ${negativeKarma.map(p => `${p.name} (${p.karma})`).join(', ')}</li>`;
-        } else {
-          results += '<li>Нет людей с отрицательной кармой</li>';
-        }
+        results += negativeKarma.length > 0
+          ? `<li>Люди с отрицательной кармой: ${negativeKarma.map(p => `${p.name} (${p.karma})`).join(', ')}</li>`
+          : '<li>Нет людей с отрицательной кармой</li>';
 
-        // Рекомендации по людям на основе меток
+        // Рекомендации по меткам
         const tagRecommendations = {
-          '💰 Ресурс': 'Поддерживайте тесный контакт для получения ресурсов.',
+          '💰 Ресурс': 'Поддерживайте контакт для получения ресурсов.',
           '🪨 Балласт': 'Сведите контакты к минимуму.',
-          '🧠 Внушаемый': 'Используйте для продвижения своих идей.',
-          '🗣️ Болтун': 'Будьте осторожны с конфиденциальной информацией.',
-          '✝️ Религиозный': 'Уважайте убеждения, избегайте споров.',
-          '🧩 Манипулятор': 'Контролируйте взаимодействие, избегайте манипуляций.',
-          '🧲 Завистливый': 'Не делитесь успехами открыто.',
-          '🦊 Хитрый': 'Проверяйте намерения и действия.'
+          '🧠 Внушаемый': 'Используйте для продвижения идей.',
+          '🗣️ Болтун': 'Будьте осторожны с информацией.',
+          '✝️ Религиозный': 'Уважайте убеждения.',
+          '🧩 Манипулятор': 'Контролируйте взаимодействие.',
+          '🧲 Завистливый': 'Избегайте обсуждения успехов.',
+          '🦊 Хитрый': 'Проверяйте намерения.'
         };
 
         people.forEach(person => {
