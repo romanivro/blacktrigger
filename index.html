@@ -6,8 +6,8 @@
   <title>BlackTrigger HQ</title>
   <link rel="manifest" href="/manifest.json">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
   <script src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
   <style>
     body {
       font-family: 'Roboto', Arial, sans-serif;
@@ -38,7 +38,6 @@
     li { padding: 10px; border-bottom: 1px solid #444; display: flex; justify-content: space-between; align-items: center; }
     .error { color: #ff4444; font-size: 0.8em; }
     .profile-card { display: flex; align-items: center; padding: 10px; border: 1px solid #444; margin-bottom: 10px; }
-    .profile-card img { width: 50px; height: 50px; border-radius: 50%; margin-right: 10px; }
     .collapsible { display: none; }
     .collapsible.active { display: block; }
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; }
@@ -51,11 +50,28 @@
     .strategy-node { padding: 10px; border: 1px solid #444; margin: 5px; border-radius: 5px; }
     .strategy-branch { display: flex; justify-content: space-around; width: 100%; }
     #network { height: 300px; border: 1px solid #444; border-radius: 5px; }
+    #rule-of-day { font-size: 1.2em; font-weight: bold; color: #00ff00; }
   </style>
 </head>
 <body>
   <div class="module">
     <button onclick="initEruda()">Открыть консоль</button>
+  </div>
+
+  <!-- Правило дня -->
+  <div class="module" id="rule-module">
+    <h2>Правило дня</h2>
+    <div id="rule-of-day"></div>
+    <button onclick="updateRuleOfDay()">Обновить правило</button>
+    <div class="error" id="rule-error"></div>
+  </div>
+
+  <!-- Справка -->
+  <div class="module" id="reference-module">
+    <h2>Справка: Кодекс Ядра</h2>
+    <input type="text" id="reference-search" placeholder="Поиск по кодексу">
+    <div id="reference-content"></div>
+    <div class="error" id="reference-error"></div>
   </div>
 
   <!-- План дня -->
@@ -167,7 +183,7 @@
     <ul id="reminder-list"></ul>
   </div>
 
-  <!-- Лог активности -->
+<!-- Лог активности -->
   <div class="module" id="activity-module">
     <h2>Лог активности</h2>
     <button onclick="toggleCollapsible('activity-list')">Показать/Скрыть</button>
@@ -213,8 +229,7 @@
     </div>
   </template>
 
-
-<script>
+  <script>
     // Инициализация Eruda
     window.initEruda = () => {
       try {
@@ -225,6 +240,7 @@
           logActivity('Открыта консоль Eruda');
         } else {
           console.error('Eruda не загружена');
+          showError('analytics', 'Eruda не загружена');
         }
       } catch (e) {
         console.error('Ошибка инициализации Eruda:', e);
@@ -265,23 +281,42 @@
     }
 
     function openModal(templateId, modalId) {
-      const template = document.getElementById(templateId);
-      if (template) {
+      try {
+        const template = document.getElementById(templateId);
+        if (!template) throw new Error(`Шаблон ${templateId} не найден`);
         const modal = template.content.cloneNode(true).querySelector('.modal');
         modal.id = modalId;
         document.body.appendChild(modal);
         modal.classList.add('active');
-      } else {
-        console.error(`Шаблон ${templateId} не найден`);
+        console.log(`Модальное окно ${modalId} открыто`);
+      } catch (e) {
+        showError(modalId.split('-')[0], 'Не удалось открыть модальное окно: ' + e.message);
+        console.error('Ошибка открытия модального окна:', e);
       }
     }
 
     function closeModal(modalId) {
-      const modal = document.getElementById(modalId);
-      if (modal) modal.remove();
+      try {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.remove();
+        console.log(`Модальное окно ${modalId} закрыто`);
+      } catch (e) {
+        console.error('Ошибка закрытия модального окна:', e);
+      }
     }
 
-    // Кодекс рекомендаций
+    // Кодекс Ядра
+    const coreCode = [
+      { principle: "Контролируй ресурсы", source: "Макиавелли", description: "Держи под контролем финансы, людей и информацию." },
+      { principle: "Побеждай без боя", source: "Сунь-цзы", description: "Используй стратегию и манипуляции, чтобы избежать прямых конфликтов." },
+      { principle: "Будь сверхчеловеком", source: "Ницше", description: "Стремись к самосовершенствованию, дисциплине и силе." },
+      { principle: "Скрывай планы", source: "Макиавелли", description: "Никогда не раскрывай намерения слабым или ненадёжным." },
+      { principle: "Действуй с расчётом", source: "Стоицизм", description: "Контролируй эмоции, принимай решения на основе логики." },
+      { principle: "Создавай миф", source: "Макиавелли", description: "Формируй образ, который внушает уважение и страх." },
+      { principle: "Используй слабости", source: "Клаузевиц", description: "Найди уязвимости врага и бей по ним." },
+      { principle: "Фокус на главном", source: "Сунь-цзы", description: "Концентрируйся на ключевых целях, отбрасывая лишнее." }
+    ];
+
     const codeRecommendations = {
       '💰 Ресурс': 'Укрепляй альянс, используй для ресурсов и влияния (Макиавелли: контролируй ресурсы).',
       '🪨 Балласт': 'Сведи контакты к минимуму, исключи из ключевых планов (Сунь-цзы: избегай слабых альянсов).',
@@ -290,9 +325,72 @@
       '🧩 Манипулятор': 'Контролируй взаимодействие, используй их амбиции (Макиавелли: перехитри хитреца).'
     };
 
+// Правило дня
+    function initRuleOfDay() {
+      try {
+        console.log('Инициализация Правила дня');
+        const ruleDisplay = document.getElementById('rule-of-day');
+        const lastRuleDate = localStorage.getItem('ruleDate');
+        const today = new Date().toDateString();
+        let currentRule = JSON.parse(localStorage.getItem('currentRule') || '{}');
+
+        if (lastRuleDate !== today || !currentRule.principle) {
+          currentRule = coreCode[Math.floor(Math.random() * coreCode.length)];
+          localStorage.setItem('currentRule', JSON.stringify(currentRule));
+          localStorage.setItem('ruleDate', today);
+        }
+
+        ruleDisplay.innerHTML = `${currentRule.principle} (${currentRule.source})<br>${currentRule.description}`;
+        logActivity(`Установлено правило дня: ${currentRule.principle}`);
+        showError('rule', '');
+        console.log('Правило дня инициализировано');
+      } catch (e) {
+        showError('rule', 'Ошибка инициализации: ' + e.message);
+        console.error('Ошибка инициализации Правила дня:', e);
+      }
+    }
+
+    window.updateRuleOfDay = () => {
+      try {
+        const ruleDisplay = document.getElementById('rule-of-day');
+        const currentRule = coreCode[Math.floor(Math.random() * coreCode.length)];
+        localStorage.setItem('currentRule', JSON.stringify(currentRule));
+        localStorage.setItem('ruleDate', new Date().toDateString());
+        ruleDisplay.innerHTML = `${currentRule.principle} (${currentRule.source})<br>${currentRule.description}`;
+        logActivity(`Обновлено правило дня: ${currentRule.principle}`);
+        showError('rule', '');
+      } catch (e) {
+        showError('rule', 'Не удалось обновить правило: ' + e.message);
+        console.error('Ошибка обновления правила дня:', e);
+      }
+    };
+
+    // Справка
+    function initReference() {
+      try {
+        console.log('Инициализация Справки');
+        const searchInput = document.getElementById('reference-search');
+        const contentDiv = document.getElementById('reference-content');
+        const renderReference = () => {
+          const search = searchInput.value.toLowerCase();
+          const filtered = coreCode.filter(c => c.principle.toLowerCase().includes(search) || c.description.toLowerCase().includes(search));
+          contentDiv.innerHTML = filtered.map(c => `<p><strong>${c.principle} (${c.source})</strong>: ${c.description}</p>`).join('');
+        };
+        renderReference();
+        searchInput.addEventListener('input', renderReference);
+        logActivity('Справка инициализирована');
+        showError('reference', '');
+        console.log('Справка инициализирована');
+      } catch (e) {
+        showError('reference', 'Ошибка инициализации: ' + e.message);
+        console.error('Ошибка инициализации Справки:', e);
+      }
+    }
+
     // План дня
     function initPlan() {
       try {
+        console.log('Инициализация Плана дня');
         const planText = document.getElementById('plan-text');
         const planPriority = document.getElementById('plan-priority');
         const planList = document.getElementById('plan-list');
@@ -397,7 +495,7 @@
             });
             updateConnectionsSelect();
             renderNetwork();
-            window.updateStrategyPeopleSelect();
+            if (window.updateStrategyPeopleSelect) window.updateStrategyPeopleSelect();
             window.renderAnalytics();
             showError('environment', '');
             console.log('Люди отображены:', people);
@@ -430,7 +528,7 @@
             const nodes = people.map((person, index) => ({
               id: index,
               label: person.name,
-              color: person.status === 'loyal' ? '#00ff00' : person.status === 'neutral' ? '#ffff00' : '#ff0000'
+              color: person.status === 'loyal' ? '#00ff00' : person.status === 'neutral' ? '#ffff00' : '#ff4444'
             }));
             const edges = [];
             people.forEach((person, index) => {
@@ -478,7 +576,8 @@
           }
         };
 
-        window.adjustKarma = (index, change) => {
+
+window.adjustKarma = (index, change) => {
           try {
             people[index].karma = Math.max(-100, Math.min(100, people[index].karma + change));
             localStorage.setItem('people', JSON.stringify(people));
@@ -514,8 +613,7 @@
       }
     }
 
-
-// Физо
+    // Физо
     function initFitness() {
       try {
         console.log('Инициализация Физо');
@@ -770,7 +868,8 @@
       }
     }
 
-    function openArchetypeModal() {
+
+function openArchetypeModal() {
       try {
         openModal('archetype-modal-template', 'archetype-modal');
         const questionsDiv = document.getElementById('questions');
@@ -793,8 +892,7 @@
       }
     }
 
-
-window.selectAnswer = (questionIndex, answer) => {
+    window.selectAnswer = (questionIndex, answer) => {
       try {
         let answers = JSON.parse(localStorage.getItem('archetypeAnswers') || '{}');
         answers[questionIndex] = answer;
@@ -937,6 +1035,7 @@ window.selectAnswer = (questionIndex, answer) => {
               document.getElementById('strategy-levers').value = '';
               document.getElementById('strategy-obstacles').value = '';
               document.getElementById('strategy-mechanisms').value = '';
+              document.getElementById('strategy-status').value = 'plan';
               renderStrategies();
               logActivity(`Добавлена стратегия: ${goal}`);
               closeModal('strategy-modal');
@@ -978,6 +1077,7 @@ window.selectAnswer = (questionIndex, answer) => {
         openModal('strategy-modal-template', 'strategy-modal');
         window.updateStrategyPeopleSelect();
         showError('strategy-modal', '');
+        console.log('Модальное окно стратегии открыто');
       } catch (e) {
         showError('strategy-modal', 'Не удалось открыть форму стратегии: ' + e.message);
         console.error('Ошибка открытия модального окна:', e);
@@ -1052,8 +1152,7 @@ window.selectAnswer = (questionIndex, answer) => {
       }
     };
 
-
-// Напоминания
+    // Напоминания
     function initReminders() {
       try {
         console.log('Инициализация Напоминаний');
@@ -1122,9 +1221,11 @@ window.selectAnswer = (questionIndex, answer) => {
       }
     }
 
-    // Инициализация и Service Worker
+    // Инициализация
     document.addEventListener('DOMContentLoaded', () => {
       console.log('Страница загружена, начинаем инициализацию');
+      initRuleOfDay();
+      initReference();
       initPlan();
       initEnvironment();
       initFitness();
