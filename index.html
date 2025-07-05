@@ -51,27 +51,50 @@
     .strategy-branch { display: flex; justify-content: space-around; width: 100%; }
     #network { height: 300px; border: 1px solid #444; border-radius: 5px; }
     #rule-of-day { font-size: 1.2em; font-weight: bold; color: #00ff00; }
+    .critical-notification { background: #ff4444; padding: 10px; font-weight: bold; }
+    .mode-switch { margin-bottom: 10px; }
+    .mode-switch button { margin-right: 10px; }
   </style>
 </head>
 <body>
+  <div class="module mode-switch">
+    <h2>Режим</h2>
+    <button onclick="switchMode('Absolute')">Absolute</button>
+    <button onclick="switchMode('Recon')">Recon</button>
+    <button onclick="switchMode('Recovery')">Recovery</button>
+  </div>
+
   <div class="module">
     <button onclick="initEruda()">Открыть консоль</button>
+    <button onclick="exportData()">Экспорт данных</button>
+    <input type="file" id="import-data" accept=".json" onchange="importData()">
+  </div>
+
+  <!-- Критические уведомления -->
+  <div class="module" id="notification-module">
+    <div id="critical-notification" class="critical-notification" style="display: none;"></div>
   </div>
 
   <!-- Правило дня -->
   <div class="module" id="rule-module">
     <h2>Правило дня</h2>
     <div id="rule-of-day"></div>
-    <button onclick="updateRuleOfDay()">Обновить правило</button>
+    <button onclick="markRule('adhered')">Придержался</button>
+    <button onclick="markRule('violated')">Нарушил</button>
+    <input type="text" id="custom-rule" placeholder="Своё правило">
+    <button onclick="addCustomRule()">Добавить правило</button>
     <div class="error" id="rule-error"></div>
   </div>
 
-  <!-- Справка -->
-  <div class="module" id="reference-module">
-    <h2>Справка: Кодекс Ядра</h2>
-    <input type="text" id="reference-search" placeholder="Поиск по кодексу">
-    <div id="reference-content"></div>
-    <div class="error" id="reference-error"></div>
+  <!-- База знаний -->
+  <div class="module" id="knowledge-module">
+    <h2>База знаний</h2>
+    <input type="text" id="knowledge-search" placeholder="Поиск по базе">
+    <input type="text" id="knowledge-title" placeholder="Название статьи">
+    <textarea id="knowledge-content" placeholder="Текст статьи"></textarea>
+    <button onclick="addKnowledge()">Добавить статью</button>
+    <div id="knowledge-list"></div>
+    <div class="error" id="knowledge-error"></div>
   </div>
 
   <!-- План дня -->
@@ -94,20 +117,29 @@
     <input type="text" id="person-name" placeholder="Имя человека">
     <select id="person-status">
       <option value="loyal">Лояльный</option>
-      <option value="neutral">Нейтральный</option>
+      <option value="neutral">Нейтрал</option>
       <option value="hostile">Враждебный</option>
+      <option value="contract">Контракт</option>
     </select>
     <select id="person-tags" multiple>
       <option value="💰 Ресурс">💰 Ресурс</option>
       <option value="🪨 Балласт">🪨 Балласт</option>
-      <option value="🧠 Внушаемый">🧠 Внушаемый</option>
       <option value="🗣️ Болтун">🗣️ Болтун</option>
       <option value="🧩 Манипулятор">🧩 Манипулятор</option>
+      <option value="👑 Лидер">👑 Лидер</option>
+      <option value="🤝 Союзник">🤝 Союзник</option>
+      <option value="⚔️ Конкурент">⚔️ Конкурент</option>
+      <option value="💼 Партнёр">💼 Партнёр</option>
+      <option value="✨ Искры">✨ Искры</option>
+      <option value="🌑 Тень">🌑 Тень</option>
+      <option value="🧠 Ментор">🧠 Ментор</option>
+      <option value="⚙️ Исполнитель">⚙️ Исполнитель</option>
     </select>
     <input type="number" id="person-karma" placeholder="Карма (0)" value="0">
     <select id="person-connections" multiple>
       <option value="">Выберите связи</option>
     </select>
+    <input type="text" id="connection-type" placeholder="Тип связи (доверие, конфликт)">
     <button onclick="addPerson()">Добавить</button>
     <div class="error" id="environment-error"></div>
     <ul id="person-list"></ul>
@@ -126,13 +158,19 @@
     <canvas id="fitness-chart"></canvas>
   </div>
 
-  <!-- Доходы и расходы -->
+ <!-- Доходы и расходы -->
   <div class="module" id="finance-module">
     <h2>Доходы и расходы</h2>
     <div class="finance-container">
       <div class="finance-column">
         <h3>Доходы</h3>
         <input type="number" id="income-amount" placeholder="Сумма">
+        <select id="income-tag">
+          <option value="Зарплата">Зарплата</option>
+          <option value="Инвестиции">Инвестиции</option>
+          <option value="Фриланс">Фриланс</option>
+          <option value="Прочее">Прочее</option>
+        </select>
         <input type="text" id="income-description" placeholder="Описание">
         <button onclick="addTransaction('income')">Записать</button>
         <ul id="income-list"></ul>
@@ -140,6 +178,13 @@
       <div class="finance-column">
         <h3>Расходы</h3>
         <input type="number" id="expense-amount" placeholder="Сумма">
+        <select id="expense-tag">
+          <option value="Еда">Еда</option>
+          <option value="Транспорт">Транспорт</option>
+          <option value="Развлечения">Развлечения</option>
+          <option value="Жильё">Жильё</option>
+          <option value="Прочее">Прочее</option>
+        </select>
         <input type="text" id="expense-description" placeholder="Описание">
         <button onclick="addTransaction('expense')">Записать</button>
         <ul id="expense-list"></ul>
@@ -147,6 +192,7 @@
     </div>
     <div id="finance-percentage"></div>
     <canvas id="finance-chart"></canvas>
+    <div id="finance-advice"></div>
     <div class="error" id="finance-error"></div>
   </div>
 
@@ -183,10 +229,11 @@
     <ul id="reminder-list"></ul>
   </div>
 
-<!-- Лог активности -->
+  <!-- Лог активности -->
   <div class="module" id="activity-module">
     <h2>Лог активности</h2>
     <button onclick="toggleCollapsible('activity-list')">Показать/Скрыть</button>
+    <button onclick="undoAction()">Отменить</button>
     <div class="error" id="activity-error"></div>
     <ul id="activity-list" class="collapsible"></ul>
   </div>
@@ -216,7 +263,7 @@
         <input type="text" id="strategy-resources" placeholder="Ресурсы">
         <input type="text" id="strategy-levers" placeholder="Рычаги">
         <input type="text" id="strategy-obstacles" placeholder="Препятствия">
-        <input type="text" id="strategy-mechanisms" placeholder="Механизмы">
+        <input type="text" id="strategy-actions" placeholder="Действия">
         <select id="strategy-status">
           <option value="plan">План</option>
           <option value="in-progress">В процессе</option>
@@ -236,14 +283,11 @@
         if (typeof eruda !== 'undefined') {
           eruda.init();
           eruda.show();
-          console.log('Eruda инициализирована');
           logActivity('Открыта консоль Eruda');
         } else {
-          console.error('Eruda не загружена');
           showError('analytics', 'Eruda не загружена');
         }
       } catch (e) {
-        console.error('Ошибка инициализации Eruda:', e);
         showError('analytics', 'Ошибка Eruda: ' + e.message);
       }
     };
@@ -251,29 +295,40 @@
     // Общие функции
     function showError(module, message) {
       const errorDiv = document.getElementById(`${module}-error`);
-      if (errorDiv) {
-        errorDiv.textContent = message;
-        console.log(`Ошибка в ${module}: ${message}`);
-      }
+      if (errorDiv) errorDiv.textContent = message;
     }
 
     function logActivity(message) {
       try {
         const activityList = document.getElementById('activity-list');
-        if (activityList) {
-          let log = JSON.parse(localStorage.getItem('activityLog') || '[]');
-          const timestamp = new Date().toLocaleString();
-          log.push(`${timestamp}: ${message}`);
-          localStorage.setItem('activityLog', JSON.stringify(log));
-          activityList.innerHTML = log.map(item => `<li>${item}</li>`).join('');
-          showError('activity', '');
-          console.log('Лог активности:', message);
-        }
+        let log = JSON.parse(localStorage.getItem('activityLog') || '[]');
+        let undoLog = JSON.parse(localStorage.getItem('undoLog') || '[]');
+        const timestamp = new Date().toLocaleString();
+        log.push({ timestamp, message });
+        undoLog.push({ timestamp, message });
+        if (undoLog.length > 5) undoLog.shift();
+        localStorage.setItem('activityLog', JSON.stringify(log));
+        localStorage.setItem('undoLog', JSON.stringify(undoLog));
+        activityList.innerHTML = log.map(item => `<li>${item.timestamp}: ${item.message}</li>`).join('');
+        showError('activity', '');
       } catch (e) {
         showError('activity', 'Не удалось записать лог: ' + e.message);
-        console.error('Ошибка лога активности:', e);
       }
     }
+
+    window.undoAction = () => {
+      try {
+        let undoLog = JSON.parse(localStorage.getItem('undoLog') || '[]');
+        if (undoLog.length > 0) {
+          undoLog.pop();
+          localStorage.setItem('undoLog', JSON.stringify(undoLog));
+          logActivity('Отменено последнее действие');
+          window.renderAnalytics();
+        }
+      } catch (e) {
+        showError('activity', 'Не удалось отменить действие: ' + e.message);
+      }
+    };
 
     function toggleCollapsible(id) {
       const element = document.getElementById(id);
@@ -283,15 +338,12 @@
     function openModal(templateId, modalId) {
       try {
         const template = document.getElementById(templateId);
-        if (!template) throw new Error(`Шаблон ${templateId} не найден`);
         const modal = template.content.cloneNode(true).querySelector('.modal');
         modal.id = modalId;
         document.body.appendChild(modal);
         modal.classList.add('active');
-        console.log(`Модальное окно ${modalId} открыто`);
       } catch (e) {
         showError(modalId.split('-')[0], 'Не удалось открыть модальное окно: ' + e.message);
-        console.error('Ошибка открытия модального окна:', e);
       }
     }
 
@@ -299,98 +351,224 @@
       try {
         const modal = document.getElementById(modalId);
         if (modal) modal.remove();
-        console.log(`Модальное окно ${modalId} закрыто`);
       } catch (e) {
-        console.error('Ошибка закрытия модального окна:', e);
+        showError(modalId.split('-')[0], 'Не удалось закрыть модальное окно: ' + e.message);
       }
     }
 
-    // Кодекс Ядра
-    const coreCode = [
-      { principle: "Контролируй ресурсы", source: "Макиавелли", description: "Держи под контролем финансы, людей и информацию." },
-      { principle: "Побеждай без боя", source: "Сунь-цзы", description: "Используй стратегию и манипуляции, чтобы избежать прямых конфликтов." },
-      { principle: "Будь сверхчеловеком", source: "Ницше", description: "Стремись к самосовершенствованию, дисциплине и силе." },
-      { principle: "Скрывай планы", source: "Макиавелли", description: "Никогда не раскрывай намерения слабым или ненадёжным." },
-      { principle: "Действуй с расчётом", source: "Стоицизм", description: "Контролируй эмоции, принимай решения на основе логики." },
-      { principle: "Создавай миф", source: "Макиавелли", description: "Формируй образ, который внушает уважение и страх." },
-      { principle: "Используй слабости", source: "Клаузевиц", description: "Найди уязвимости врага и бей по ним." },
-      { principle: "Фокус на главном", source: "Сунь-цзы", description: "Концентрируйся на ключевых целях, отбрасывая лишнее." }
+    function switchMode(mode) {
+      document.body.style.background = mode === 'Absolute' ? '#1a1a1a' : mode === 'Recon' ? '#1a2a3a' : '#1a3a1a';
+      document.querySelectorAll('h2').forEach(h2 => {
+        h2.style.color = mode === 'Absolute' ? '#ff4444' : mode === 'Recon' ? '#00b7ff' : '#00ff00';
+      });
+      logActivity(`Режим переключён: ${mode}`);
+    }
+
+    function exportData() {
+      try {
+        const data = {
+          people: JSON.parse(localStorage.getItem('people') || '[]'),
+          transactions: JSON.parse(localStorage.getItem('transactions') || '[]'),
+          plans: JSON.parse(localStorage.getItem('plans') || '[]'),
+          strategies: JSON.parse(localStorage.getItem('strategies') || '[]'),
+          exercises: JSON.parse(localStorage.getItem('exercises') || '[]'),
+          rules: JSON.parse(localStorage.getItem('customRules') || '[]'),
+          knowledge: JSON.parse(localStorage.getItem('knowledge') || '[]')
+        };
+        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'blacktrigger_data.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        logActivity('Данные экспортированы');
+      } catch (e) {
+        showError('analytics', 'Не удалось экспортировать данные: ' + e.message);
+      }
+    }
+
+    function importData() {
+      try {
+        const file = document.getElementById('import-data').files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const data = JSON.parse(e.target.result);
+          Object.keys(data).forEach(key => localStorage.setItem(key, JSON.stringify(data[key])));
+          window.location.reload();
+        };
+        reader.readAsText(file);
+        logActivity('Данные импортированы');
+      } catch (e) {
+        showError('analytics', 'Не удалось импортировать данные: ' + e.message);
+      }
+    }
+
+    // Правила дня
+    const coreRules = [
+      "Если не приносит ресурс — отсекай.",
+      "Хищник молчит чаще, чем говорит.",
+      "Контроль над собой — контроль над всем.",
+      "Каждое взаимодействие — война за интересы.",
+      "Грубость — фильтр. Кто слаб — отпадёт сам.",
+      "Сначала доминируй, потом дружи.",
+      "Если не давят на тебя — дави ты.",
+      "Ложь — инструмент, не слабость.",
+      "Правильное ≠ выгодное. Выбирай выгоду.",
+      "Каждый шаг — это шаг к власти.",
+      "Слабость — это выбор, а не судьба.",
+      "Доверяй только тем, кто доказал лояльность.",
+      "Сила — в дисциплине, а не в эмоциях.",
+      "Побеждай, пока другие думают.",
+      "Каждый враг — это урок.",
+      "Ресурсы важнее чувств.",
+      "Скрывай свои планы, пока не пора бить.",
+      "Действуй первым, если уверен в победе.",
+      "Сила в знании, знание в контроле.",
+      "Твоя репутация — твой рычаг.",
+      "Не трать время на тех, кто не растёт.",
+      "Всё, что не усиливает — ослабляет.",
+      "Держи врагов ближе, чем друзей.",
+      "Выгода — твой компас.",
+      "Слабые жалуются, сильные решают.",
+      "Каждый день — битва за твои цели.",
+      "Эмоции — цепи, разум — оружие.",
+      "Кто знает твои слабости — твой враг.",
+      "Контролируй информацию — контролируй игру.",
+      "Сила в одиночестве, если толпа слаба.",
+      "Не проси — бери.",
+      "Победа — это система, а не случай.",
+      "Твоя цель — твой закон.",
+      "Слабость других — твой рычаг.",
+      "Действуй, пока другие ждут.",
+      "Каждый выбор — это шаг к трону.",
+      "Будь тем, кого боятся потерять.",
+      "Сила — это не кричать, а делать.",
+      "Кто не с тобой — против тебя.",
+      "Рискуй, но рассчитывай.",
+      "Твоя воля — твой главный ресурс.",
+      "Не жди шанса — создавай его.",
+      "Сильный не жалуется, а меняет реальность.",
+      "Каждый союз — это сделка.",
+      "Знай слабости других лучше, чем свои.",
+      "Контроль времени — контроль жизни.",
+      "Будь готов потерять, чтобы выиграть.",
+      "Сила в простоте, слабость в хаосе.",
+      "Твоя цель важнее чужих ожиданий.",
+      "Действуй, как будто уже победил."
     ];
 
-    const codeRecommendations = {
-      '💰 Ресурс': 'Укрепляй альянс, используй для ресурсов и влияния (Макиавелли: контролируй ресурсы).',
-      '🪨 Балласт': 'Сведи контакты к минимуму, исключи из ключевых планов (Сунь-цзы: избегай слабых альянсов).',
-      '🧠 Внушаемый': 'Используй для продвижения идей, но проверяй лояльность (Макиавелли: управляй через убеждение).',
-      '🗣️ Болтун': 'Избегай разглашения, держи дистанцию (Сунь-цзы: скрывай планы).',
-      '🧩 Манипулятор': 'Контролируй взаимодействие, используй их амбиции (Макиавелли: перехитри хитреца).'
-    };
-
-// Правило дня
-    function initRuleOfDay() {
+function initRuleOfDay() {
       try {
-        console.log('Инициализация Правила дня');
         const ruleDisplay = document.getElementById('rule-of-day');
         const lastRuleDate = localStorage.getItem('ruleDate');
         const today = new Date().toDateString();
         let currentRule = JSON.parse(localStorage.getItem('currentRule') || '{}');
+        let customRules = JSON.parse(localStorage.getItem('customRules') || '[]');
+        const allRules = [...coreRules, ...customRules];
 
-        if (lastRuleDate !== today || !currentRule.principle) {
-          currentRule = coreCode[Math.floor(Math.random() * coreCode.length)];
+        if (lastRuleDate !== today || !currentRule.text) {
+          currentRule = { text: allRules[Math.floor(Math.random() * allRules.length)], adhered: 0, violated: 0 };
           localStorage.setItem('currentRule', JSON.stringify(currentRule));
           localStorage.setItem('ruleDate', today);
         }
 
-        ruleDisplay.innerHTML = `${currentRule.principle} (${currentRule.source})<br>${currentRule.description}`;
-        logActivity(`Установлено правило дня: ${currentRule.principle}`);
+        ruleDisplay.textContent = currentRule.text;
+        logActivity(`Установлено правило дня: ${currentRule.text}`);
         showError('rule', '');
-        console.log('Правило дня инициализировано');
+        checkInactivity();
       } catch (e) {
         showError('rule', 'Ошибка инициализации: ' + e.message);
-        console.error('Ошибка инициализации Правила дня:', e);
       }
     }
 
-    window.updateRuleOfDay = () => {
+    window.markRule = (status) => {
       try {
-        const ruleDisplay = document.getElementById('rule-of-day');
-        const currentRule = coreCode[Math.floor(Math.random() * coreCode.length)];
+        let currentRule = JSON.parse(localStorage.getItem('currentRule') || '{}');
+        currentRule[status] = (currentRule[status] || 0) + 1;
         localStorage.setItem('currentRule', JSON.stringify(currentRule));
-        localStorage.setItem('ruleDate', new Date().toDateString());
-        ruleDisplay.innerHTML = `${currentRule.principle} (${currentRule.source})<br>${currentRule.description}`;
-        logActivity(`Обновлено правило дня: ${currentRule.principle}`);
+        logActivity(`Правило дня: ${status === 'adhered' ? 'Придержался' : 'Нарушил'} - ${currentRule.text}`);
+        window.renderAnalytics();
         showError('rule', '');
       } catch (e) {
-        showError('rule', 'Не удалось обновить правило: ' + e.message);
-        console.error('Ошибка обновления правила дня:', e);
+        showError('rule', 'Не удалось отметить правило: ' + e.message);
       }
     };
 
-    // Справка
-    function initReference() {
+    window.addCustomRule = () => {
       try {
-        console.log('Инициализация Справки');
-        const searchInput = document.getElementById('reference-search');
-        const contentDiv = document.getElementById('reference-content');
-        const renderReference = () => {
-          const search = searchInput.value.toLowerCase();
-          const filtered = coreCode.filter(c => c.principle.toLowerCase().includes(search) || c.description.toLowerCase().includes(search));
-          contentDiv.innerHTML = filtered.map(c => `<p><strong>${c.principle} (${c.source})</strong>: ${c.description}</p>`).join('');
-        };
-        renderReference();
-        searchInput.addEventListener('input', renderReference);
-        logActivity('Справка инициализирована');
-        showError('reference', '');
-        console.log('Справка инициализирована');
+        const customRule = document.getElementById('custom-rule').value.trim();
+        if (customRule) {
+          let customRules = JSON.parse(localStorage.getItem('customRules') || '[]');
+          customRules.push(customRule);
+          localStorage.setItem('customRules', JSON.stringify(customRules));
+          document.getElementById('custom-rule').value = '';
+          logActivity(`Добавлено пользовательское правило: ${customRule}`);
+          showError('rule', '');
+        } else {
+          showError('rule', 'Введите правило');
+        }
       } catch (e) {
-        showError('reference', 'Ошибка инициализации: ' + e.message);
-        console.error('Ошибка инициализации Справки:', e);
+        showError('rule', 'Не удалось добавить правило: ' + e.message);
+      }
+    };
+
+    // База знаний
+    function initKnowledge() {
+      try {
+        const searchInput = document.getElementById('knowledge-search');
+        const knowledgeList = document.getElementById('knowledge-list');
+        let knowledge = JSON.parse(localStorage.getItem('knowledge') || '[]');
+        const defaultKnowledge = [
+          { title: "Как найти рычаги влияния", content: "Идентифицируй слабости других, используй их амбиции, создавай зависимость." },
+          { title: "Техники манипуляции", content: "Дай иллюзию выбора, используй похвалу для лояльности, скрывай свои намерения." },
+          { title: "Построение альянсов", content: "Ищи тех, кто приносит ресурсы, проверяй лояльность, исключай слабых." }
+        ];
+        if (knowledge.length === 0) {
+          knowledge = defaultKnowledge;
+          localStorage.setItem('knowledge', JSON.stringify(knowledge));
+        }
+
+        const renderKnowledge = () => {
+          const search = searchInput.value.toLowerCase();
+          const filtered = knowledge.filter(k => k.title.toLowerCase().includes(search) || k.content.toLowerCase().includes(search));
+          knowledgeList.innerHTML = filtered.map(k => `<div><strong>${k.title}</strong><p>${k.content}</p></div>`).join('');
+        };
+
+        renderKnowledge();
+        searchInput.addEventListener('input', renderKnowledge);
+        logActivity('База знаний инициализирована');
+        showError('knowledge', '');
+      } catch (e) {
+        showError('knowledge', 'Ошибка инициализации: ' + e.message);
       }
     }
+
+    window.addKnowledge = () => {
+      try {
+        const title = document.getElementById('knowledge-title').value.trim();
+        const content = document.getElementById('knowledge-content').value.trim();
+        if (title && content) {
+          let knowledge = JSON.parse(localStorage.getItem('knowledge') || '[]');
+          knowledge.push({ title, content });
+          localStorage.setItem('knowledge', JSON.stringify(knowledge));
+          document.getElementById('knowledge-title').value = '';
+          document.getElementById('knowledge-content').value = '';
+          initKnowledge();
+          logActivity(`Добавлена статья: ${title}`);
+          showError('knowledge', '');
+        } else {
+          showError('knowledge', 'Введите название и текст');
+        }
+      } catch (e) {
+        showError('knowledge', 'Не удалось добавить статью: ' + e.message);
+      }
+    };
 
     // План дня
     function initPlan() {
       try {
-        console.log('Инициализация Плана дня');
         const planText = document.getElementById('plan-text');
         const planPriority = document.getElementById('plan-priority');
         const planList = document.getElementById('plan-list');
@@ -403,16 +581,16 @@
               const li = document.createElement('li');
               li.innerHTML = `
                 ${plan.text} (Приоритет: ${plan.priority}, ${new Date(plan.created).toLocaleDateString()})
+                <input type="checkbox" ${plan.completed ? 'checked' : ''} onchange="togglePlan(${index})">
                 <button onclick="deletePlan(${index})">❌</button>
               `;
               planList.appendChild(li);
             });
             window.renderAnalytics();
             showError('plan', '');
-            console.log('План дня отображён:', plans);
+            checkInactivity();
           } catch (e) {
             showError('plan', 'Не удалось отобразить план: ' + e.message);
-            console.error('Ошибка рендеринга плана:', e);
           }
         };
 
@@ -421,19 +599,29 @@
             const text = planText.value.trim();
             const priority = planPriority.value;
             if (text) {
-              plans.push({ text, priority, created: new Date().toISOString() });
+              plans.push({ text, priority, created: new Date().toISOString(), completed: false });
               localStorage.setItem('plans', JSON.stringify(plans));
               planText.value = '';
               planPriority.value = 'low';
               renderPlans();
-              logActivity(`Добавлена задача в план: ${text}`);
+              logActivity(`Добавлена задача: ${text}`);
               showError('plan', '');
             } else {
               showError('plan', 'Введите задачу');
             }
           } catch (e) {
             showError('plan', 'Не удалось добавить задачу: ' + e.message);
-            console.error('Ошибка добавления задачи:', e);
+          }
+        };
+
+        window.togglePlan = (index) => {
+          try {
+            plans[index].completed = !plans[index].completed;
+            localStorage.setItem('plans', JSON.stringify(plans));
+            renderPlans();
+            logActivity(`Задача ${plans[index].text}: ${plans[index].completed ? 'Выполнена' : 'Отменена'}`);
+          } catch (e) {
+            showError('plan', 'Не удалось изменить статус задачи: ' + e.message);
           }
         };
 
@@ -447,27 +635,46 @@
             showError('plan', '');
           } catch (e) {
             showError('plan', 'Не удалось удалить задачу: ' + e.message);
-            console.error('Ошибка удаления задачи:', e);
           }
         };
 
         renderPlans();
-        console.log('План дня инициализирован');
       } catch (e) {
         showError('plan', 'Ошибка инициализации: ' + e.message);
-        console.error('Ошибка инициализации Плана:', e);
       }
     }
 
     // Окружение
+    const tagRecommendations = {
+      '💰 Ресурс': 'Укрепляй альянс, используй для ресурсов.',
+      '🪨 Балласт': 'Сведи контакты к минимуму, исключи из планов.',
+      '🗣️ Болтун': 'Избегай разглашения, держи дистанцию.',
+      '🧩 Манипулятор': 'Контролируй взаимодействие, используй их амбиции.',
+      '👑 Лидер': 'Сотрудничай, но сохраняй контроль.',
+      '🤝 Союзник': 'Вовлекай в стратегии, повышай карму.',
+      '⚔️ Конкурент': 'Следи за действиями, нейтрализуй угрозы.',
+      '💼 Партнёр': 'Держи баланс выгоды, проверяй лояльность.',
+      '✨ Искры': 'Инвестируй время, развивай потенциал.',
+      '🌑 Тень': 'Проверяй намерения, минимизируй риски.',
+      '🧠 Ментор': 'Учись, но фильтруй советы.',
+      '⚙️ Исполнитель': 'Делегируй задачи, контролируй результат.'
+    };
+
+
+const comboRecommendations = {
+      '💰 Ресурс,👑 Лидер': 'Мощный альянс: используй их ресурсы и влияние для своих целей.',
+      '🪨 Балласт,🗣️ Болтун': 'Исключи из окружения: они тратят твоё время и ресурсы.',
+      '🧩 Манипулятор,⚔️ Конкурент': 'Опасная комбинация: перенаправляй их энергию против других.'
+    };
+
     function initEnvironment() {
       try {
-        console.log('Инициализация Окружения');
         const personName = document.getElementById('person-name');
         const personStatus = document.getElementById('person-status');
         const personTags = document.getElementById('person-tags');
         const personKarma = document.getElementById('person-karma');
         const personConnections = document.getElementById('person-connections');
+        const connectionType = document.getElementById('connection-type');
         const personList = document.getElementById('person-list');
         let people = JSON.parse(localStorage.getItem('people') || '[]');
 
@@ -476,8 +683,12 @@
             personList.innerHTML = '';
             people.forEach((person, index) => {
               const tagsDisplay = person.tags.length > 0 ? person.tags.join(', ') : 'нет';
-              const connectionsDisplay = person.connections.length > 0 ? person.connections.join(', ') : 'нет';
-              const recommendations = person.tags.map(tag => codeRecommendations[tag] || '').join('<br>');
+              const connectionsDisplay = person.connections.length > 0 ? person.connections.map(c => `${c.name} (${c.type})`).join(', ') : 'нет';
+              const recommendations = person.tags.map(tag => tagRecommendations[tag] || '').join('<br>');
+              const comboRecs = Object.keys(comboRecommendations).filter(combo => {
+                const tags = combo.split(',');
+                return tags.every(tag => person.tags.includes(tag));
+              }).map(combo => comboRecommendations[combo]).join('<br>');
               const li = document.createElement('li');
               li.className = 'profile-card';
               li.innerHTML = `
@@ -485,8 +696,10 @@
                   <strong>${person.name}</strong> (${person.status}, Карма: ${person.karma})<br>
                   Метки: ${tagsDisplay}<br>
                   Связи: ${connectionsDisplay}<br>
-                  Рекомендации: ${recommendations || 'Нет рекомендаций'}<br>
-                  <button onclick="adjustKarma(${index}, 5)">+5</button>
+                  Роль: ${person.role || 'Не определена'}<br>
+                  Рекомендации: ${recommendations || 'Нет'}<br>${comboRecs || ''}
+                  <button onclick="openRoleTest(${index})">Пройти тест роли</button>
+                  <button onclick="adjustKarma(${index}, 10)">+10</button>
                   <button onclick="adjustKarma(${index}, -10)">-10</button>
                   <button onclick="deletePerson(${index})">❌</button>
                 </div>
@@ -495,13 +708,11 @@
             });
             updateConnectionsSelect();
             renderNetwork();
-            if (window.updateStrategyPeopleSelect) window.updateStrategyPeopleSelect();
+            window.updateStrategyPeopleSelect();
             window.renderAnalytics();
             showError('environment', '');
-            console.log('Люди отображены:', people);
           } catch (e) {
             showError('environment', 'Не удалось отобразить список: ' + e.message);
-            console.error('Ошибка рендеринга людей:', e);
           }
         };
 
@@ -514,10 +725,8 @@
               option.textContent = person.name;
               personConnections.appendChild(option);
             });
-            console.log('Связи обновлены');
           } catch (e) {
             showError('environment', 'Не удалось обновить связи: ' + e.message);
-            console.error('Ошибка обновления связей:', e);
           }
         };
 
@@ -528,24 +737,22 @@
             const nodes = people.map((person, index) => ({
               id: index,
               label: person.name,
-              color: person.status === 'loyal' ? '#00ff00' : person.status === 'neutral' ? '#ffff00' : '#ff4444'
+              color: person.status === 'loyal' ? '#00ff00' : person.status === 'neutral' ? '#ffff00' : person.status === 'contract' ? '#888888' : '#ff4444'
             }));
             const edges = [];
             people.forEach((person, index) => {
               person.connections.forEach(connection => {
-                const targetIndex = people.findIndex(p => p.name === connection);
+                const targetIndex = people.findIndex(p => p.name === connection.name);
                 if (targetIndex !== -1) {
-                  edges.push({ from: index, to: targetIndex });
+                  edges.push({ from: index, to: targetIndex, label: connection.type });
                 }
               });
             });
             const data = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
-            const options = { nodes: { shape: 'dot', size: 20 }, edges: { arrows: 'to' } };
+            const options = { nodes: { shape: 'dot', size: 20 }, edges: { arrows: 'to', font: { align: 'middle' } } };
             new vis.Network(container, data, options);
-            console.log('Граф связей отображён');
           } catch (e) {
             showError('environment', 'Не удалось отобразить граф: ' + e.message);
-            console.error('Ошибка рендеринга графа:', e);
           }
         };
 
@@ -555,15 +762,19 @@
             const status = personStatus.value;
             const tags = Array.from(personTags.selectedOptions).map(opt => opt.value);
             const karma = parseInt(personKarma.value) || 0;
-            const connections = Array.from(personConnections.selectedOptions).map(opt => opt.value);
+            const connections = Array.from(personConnections.selectedOptions).map(opt => ({
+              name: opt.value,
+              type: connectionType.value.trim() || 'не указано'
+            }));
             if (name) {
-              people.push({ name, status, tags, karma, connections });
+              people.push({ name, status, tags, karma, connections, role: '' });
               localStorage.setItem('people', JSON.stringify(people));
               personName.value = '';
-              personStatus.value = 'loyal';
+              personStatus.value = 'neutral';
               Array.from(personTags.options).forEach(option => option.selected = false);
               personKarma.value = '0';
               Array.from(personConnections.options).forEach(option => option.selected = false);
+              connectionType.value = '';
               renderPeople();
               logActivity(`Добавлен человек: ${name}`);
               showError('environment', '');
@@ -572,21 +783,21 @@
             }
           } catch (e) {
             showError('environment', 'Не удалось добавить человека: ' + e.message);
-            console.error('Ошибка добавления человека:', e);
           }
         };
 
-
-window.adjustKarma = (index, change) => {
+        window.adjustKarma = (index, change) => {
           try {
             people[index].karma = Math.max(-100, Math.min(100, people[index].karma + change));
+            if (people[index].karma >= 50) people[index].status = 'loyal';
+            else if (people[index].karma <= -50) people[index].status = 'hostile';
+            else if (people[index].status !== 'contract') people[index].status = 'neutral';
             localStorage.setItem('people', JSON.stringify(people));
             renderPeople();
             logActivity(`Изменена карма для ${people[index].name}: ${people[index].karma}`);
             showError('environment', '');
           } catch (e) {
             showError('environment', 'Не удалось изменить карму: ' + e.message);
-            console.error('Ошибка изменения кармы:', e);
           }
         };
 
@@ -600,23 +811,80 @@ window.adjustKarma = (index, change) => {
             showError('environment', '');
           } catch (e) {
             showError('environment', 'Не удалось удалить человека: ' + e.message);
-            console.error('Ошибка удаления человека:', e);
+          }
+        };
+
+        window.openRoleTest = (index) => {
+          try {
+            openModal('archetype-modal-template', 'role-modal');
+            const questionsDiv = document.getElementById('questions');
+            const questions = [
+              { text: 'Как он принимает решения?', options: ['Логика', 'Эмоции', 'Интуиция', 'Анализ'] },
+              { text: 'Как он влияет на других?', options: ['Давлением', 'Убеждением', 'Харизмой', 'Скрытно'] },
+              { text: 'Его цель в конфликте?', options: ['Победа', 'Компромисс', 'Избежание', 'Контроль'] },
+              { text: 'Как он реагирует на стресс?', options: ['Агрессия', 'Спокойствие', 'Уход', 'Манипуляция'] }
+            ];
+            questionsDiv.innerHTML = questions.map((q, i) => `
+              <div>
+                <p>${q.text}</p>
+                ${q.options.map(opt => `<button onclick="selectAnswer(${i}, '${opt}', ${index})">${opt}</button>`).join('')}
+              </div>
+            `).join('');
+            showError('role-modal', '');
+          } catch (e) {
+            showError('environment', 'Не удалось открыть тест: ' + e.message);
+          }
+        };
+
+        window.selectAnswer = (questionIndex, answer, personIndex) => {
+          try {
+            let answers = JSON.parse(localStorage.getItem(`roleAnswers_${personIndex}`) || '{}');
+            answers[questionIndex] = answer;
+            localStorage.setItem(`roleAnswers_${personIndex}`, JSON.stringify(answers));
+          } catch (e) {
+            showError('environment', 'Не удалось сохранить ответ: ' + e.message);
+          }
+        };
+
+        window.submitArchetype = () => {
+          try {
+            const modal = document.getElementById('role-modal') || document.getElementById('archetype-modal');
+            const personIndex = modal.id === 'role-modal' ? parseInt(modal.dataset.personIndex) : -1;
+            const answersKey = personIndex >= 0 ? `roleAnswers_${personIndex}` : 'archetypeAnswers';
+            const answers = JSON.parse(localStorage.getItem(answersKey) || '{}');
+            if (Object.keys(answers).length < 4) {
+              showError(modal.id, 'Ответьте на все вопросы');
+              return;
+            }
+            const role = determineRole(answers);
+            if (personIndex >= 0) {
+              people[personIndex].role = role;
+              localStorage.setItem('people', JSON.stringify(people));
+              renderPeople();
+              logActivity(`Определена роль для ${people[personIndex].name}: ${role}`);
+            } else {
+              localStorage.setItem('archetype', role);
+              document.getElementById('archetype-result').innerHTML = `Ваш архетип: ${role}<br>${getArchetypeRecommendations(role)}`;
+              logActivity(`Определён архетип: ${role}`);
+            }
+            closeModal(modal.id);
+            showError(modal.id, '');
+          } catch (e) {
+            showError(modal.id, 'Не удалось определить роль: ' + e.message);
           }
         };
 
         renderPeople();
         updateConnectionsSelect();
-        console.log('Окружение инициализировано');
       } catch (e) {
         showError('environment', 'Ошибка инициализации: ' + e.message);
-        console.error('Ошибка инициализации Окружения:', e);
       }
     }
 
-    // Физо
+
+// Физо
     function initFitness() {
       try {
-        console.log('Инициализация Физо');
         const exerciseType = document.getElementById('exercise-type');
         const exerciseResult = document.getElementById('exercise-result');
         const exerciseList = document.getElementById('exercise-list');
@@ -637,10 +905,9 @@ window.adjustKarma = (index, change) => {
             updateFitnessChart();
             window.renderAnalytics();
             showError('fitness', '');
-            console.log('Упражнения отображены:', exercises);
+            checkInactivity();
           } catch (e) {
             showError('fitness', 'Не удалось отобразить упражнения: ' + e.message);
-            console.error('Ошибка рендеринга упражнений:', e);
           }
         };
 
@@ -672,10 +939,8 @@ window.adjustKarma = (index, change) => {
               options: { scales: { y: { beginAtZero: true } } }
             });
             showError('fitness', '');
-            console.log('График физо обновлён');
           } catch (e) {
             showError('fitness', 'Не удалось обновить график: ' + e.message);
-            console.error('Ошибка обновления графика физо:', e);
           }
         };
 
@@ -696,7 +961,6 @@ window.adjustKarma = (index, change) => {
             }
           } catch (e) {
             showError('fitness', 'Не удалось добавить упражнение: ' + e.message);
-            console.error('Ошибка добавления упражнения:', e);
           }
         };
 
@@ -709,29 +973,28 @@ window.adjustKarma = (index, change) => {
             showError('fitness', '');
           } catch (e) {
             showError('fitness', 'Не удалось удалить упражнения: ' + e.message);
-            console.error('Ошибка удаления упражнений:', e);
           }
         };
 
         renderExercises();
-        console.log('Физо инициализировано');
       } catch (e) {
         showError('fitness', 'Ошибка инициализации: ' + e.message);
-        console.error('Ошибка инициализации Физо:', e);
       }
     }
 
     // Доходы и расходы
     function initFinance() {
       try {
-        console.log('Инициализация Финансов');
         const incomeAmount = document.getElementById('income-amount');
+        const incomeTag = document.getElementById('income-tag');
         const incomeDescription = document.getElementById('income-description');
         const expenseAmount = document.getElementById('expense-amount');
+        const expenseTag = document.getElementById('expense-tag');
         const expenseDescription = document.getElementById('expense-description');
         const incomeList = document.getElementById('income-list');
         const expenseList = document.getElementById('expense-list');
         const percentageText = document.getElementById('finance-percentage');
+        const financeAdvice = document.getElementById('finance-advice');
         const financeChart = document.getElementById('finance-chart').getContext('2d');
         let transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
         let chart;
@@ -745,7 +1008,7 @@ window.adjustKarma = (index, change) => {
 
             recentTransactions.forEach((transaction, index) => {
               const li = document.createElement('li');
-              li.innerHTML = `${transaction.amount} - ${transaction.description} (${new Date(transaction.date).toLocaleDateString()})
+              li.innerHTML = `${transaction.amount} (${transaction.tag}) - ${transaction.description} (${new Date(transaction.date).toLocaleDateString()})
                 <button onclick="deleteTransaction(${index})">❌</button>`;
               if (transaction.type === 'income') {
                 incomeList.appendChild(li);
@@ -761,13 +1024,19 @@ window.adjustKarma = (index, change) => {
             percentageText.textContent = `Доходы: ${income} | Расходы: ${expense} | Эффективность: ${percentage}%`;
             percentageText.style.color = percentage > 50 ? '#00ff00' : percentage == 50 ? '#ffff00' : '#ff4444';
 
+            const advice = [];
+            if (percentage < 50) advice.push('Сократите расходы на развлечения и жильё (Сунь-цзы: фокус на главном).');
+            if (income > 0) advice.push('Инвестируйте 20% дохода в новые ресурсы (Макиавелли: контролируй ресурсы).');
+            if (recentTransactions.filter(t => t.tag === 'Развлечения').length > 3) {
+              advice.push('Слишком много трат на развлечения. Перераспределите ресурсы.');
+            }
+            financeAdvice.innerHTML = advice.length > 0 ? `<ul>${advice.map(a => `<li>${a}</li>`).join('')}</ul>` : '';
+
             updateFinanceChart();
             window.renderAnalytics();
             showError('finance', '');
-            console.log('Транзакции отображены:', transactions);
           } catch (e) {
             showError('finance', 'Не удалось отобразить транзакции: ' + e.message);
-            console.error('Ошибка рендеринга транзакций:', e);
           }
         };
 
@@ -797,36 +1066,36 @@ window.adjustKarma = (index, change) => {
               },
               options: { scales: { y: { beginAtZero: true } } }
             });
-            console.log('График финансов обновлён');
           } catch (e) {
             showError('finance', 'Не удалось обновить график: ' + e.message);
-            console.error('Ошибка обновления графика финансов:', e);
           }
         };
 
         window.addTransaction = (type) => {
           try {
             const amount = parseFloat(type === 'income' ? incomeAmount.value : expenseAmount.value);
+            const tag = type === 'income' ? incomeTag.value : expenseTag.value;
             const description = (type === 'income' ? incomeDescription.value : expenseDescription.value).trim();
             if (!isNaN(amount) && amount > 0 && description) {
-              transactions.push({ amount, type, description, date: new Date().toISOString() });
+              transactions.push({ amount, type, tag, description, date: new Date().toISOString() });
               localStorage.setItem('transactions', JSON.stringify(transactions));
               if (type === 'income') {
                 incomeAmount.value = '';
                 incomeDescription.value = '';
+                incomeTag.value = 'Зарплата';
               } else {
                 expenseAmount.value = '';
                 expenseDescription.value = '';
+                expenseTag.value = 'Еда';
               }
               renderTransactions();
-              logActivity(`Добавлена транзакция: ${type}, ${amount}`);
+              logActivity(`Добавлена транзакция: ${type}, ${amount}, ${tag}`);
               showError('finance', '');
             } else {
               showError('finance', 'Введите сумму (>0) и описание');
             }
           } catch (e) {
             showError('finance', 'Не удалось добавить транзакцию: ' + e.message);
-            console.error('Ошибка добавления транзакции:', e);
           }
         };
 
@@ -840,413 +1109,481 @@ window.adjustKarma = (index, change) => {
             showError('finance', '');
           } catch (e) {
             showError('finance', 'Не удалось удалить транзакцию: ' + e.message);
-            console.error('Ошибка удаления транзакции:', e);
           }
         };
 
         renderTransactions();
-        console.log('Финансы инициализированы');
       } catch (e) {
         showError('finance', 'Ошибка инициализации: ' + e.message);
-        console.error('Ошибка инициализации Финансов:', e);
       }
     }
 
-    // Архетипы
+ // Архетипы
+    const archetypeQuestions = [
+      { text: 'Как вы принимаете решения?', options: ['Логика', 'Эмоции', 'Интуиция', 'Анализ'] },
+      { text: 'Как вы влияете на других?', options: ['Давлением', 'Убеждением', 'Харизмой', 'Скрытно'] },
+      { text: 'Ваша цель в конфликте?', options: ['Победа', 'Компромисс', 'Избежание', 'Контроль'] },
+      { text: 'Как реагируете на стресс?', options: ['Агрессия', 'Спокойствие', 'Уход', 'Манипуляция'] },
+      { text: 'Ваша роль в группе?', options: ['Лидер', 'Советник', 'Исполнитель', 'Провокатор'] },
+      { text: 'Что вас мотивирует?', options: ['Власть', 'Знания', 'Стабильность', 'Свобода'] },
+      { text: 'Как вы оцениваете других?', options: ['По делам', 'По словам', 'По потенциалу', 'По лояльности'] },
+      { text: 'Ваше отношение к риску?', options: ['Рискую осознанно', 'Избегаю', 'Люблю риск', 'Анализирую'] },
+      { text: 'Как вы строите связи?', options: ['Через выгоду', 'Через доверие', 'Через манипуляции', 'Через харизму'] },
+      { text: 'Ваше отношение к этике?', options: ['Выгода важнее', 'Баланс', 'Этика первична', 'Игнорирую'] },
+      { text: 'Как вы справляетесь с неудачей?', options: ['Анализирую', 'Злюсь', 'Игнорирую', 'Учусь'] },
+      { text: 'Ваше отношение к власти?', options: ['Стремлюсь', 'Наблюдаю', 'Избегаю', 'Использую'] },
+      { text: 'Как вы планируете?', options: ['Долгосрочно', 'Краткосрочно', 'Спонтанно', 'Детально'] },
+      { text: 'Ваше отношение к эмоциям?', options: ['Контролирую', 'Поддаюсь', 'Игнорирую', 'Использую'] },
+      { text: 'Как вы оцениваете успех?', options: ['По результату', 'По процессу', 'По влиянию', 'По признанию'] },
+      { text: 'Ваше отношение к конкурентам?', options: ['Уничтожаю', 'Наблюдаю', 'Сотрудничаю', 'Игнорирую'] },
+      { text: 'Как вы обучаетесь?', options: ['Практика', 'Теория', 'Ошибки', 'Наставники'] },
+      { text: 'Ваше отношение к лояльности?', options: ['Требую', 'Ценю', 'Игнорирую', 'Проверяю'] },
+      { text: 'Как вы управляете временем?', options: ['Жёстко', 'Гибко', 'Спонтанно', 'Делегирую'] },
+      { text: 'Ваше отношение к слабостям?', options: ['Использую', 'Игнорирую', 'Устраняю', 'Скрываю'] }
+    ];
+
+    const archetypeRecommendations = {
+      'Хищник': 'Дави на слабости конкурентов, скрывай намерения, используй силу для контроля.',
+      'Стратег': 'Планируй на три шага вперёд, создавай альянсы, контролируй ресурсы.',
+      'Оракул': 'Собирай информацию, предугадывай ходы, оставайся в тени.',
+      'Провокатор': 'Разрушай шаблоны, перенаправляй энергию врагов, создавай хаос для выгоды.',
+      'Исполнитель': 'Сосредоточься на выполнении задач, делегируй слабости, будь надёжным.',
+      'Герой': 'Веди за собой, создавай миф, но не теряй расчёт.',
+      'Кукловод': 'Управляй через иллюзии, скрывай свои рычаги, манипулируй эмоциями.',
+      'Медиатор': 'Создавай баланс, но используй компромиссы для своей выгоды.',
+      'Наблюдатель': 'Анализируй, собирай данные, бей в нужный момент.'
+    };
+
+    function determineRole(answers) {
+      const scores = {
+        Хищник: 0, Стратег: 0, Оракул: 0, Провокатор: 0, Исполнитель: 0,
+        Герой: 0, Кукловод: 0, Медиатор: 0, Наблюдатель: 0
+      };
+      if (answers[0] === 'Логика' || answers[0] === 'Анализ') scores.Стратег += 1;
+      if (answers[1] === 'Давлением') scores.Хищник += 1;
+      if (answers[1] === 'Скрытно') scores.Кукловод += 1;
+      if (answers[2] === 'Победа' || answers[2] === 'Контроль') scores.Хищник += 1;
+      if (answers[3] === 'Спокойствие') scores.Медиатор += 1;
+      if (answers[4] === 'Лидер') scores.Герой += 1;
+      if (answers[5] === 'Власть') scores.Хищник += 1;
+      if (answers[6] === 'По делам') scores.Исполнитель += 1;
+      if (answers[7] === 'Анализирую') scores.Стратег += 1;
+      if (answers[8] === 'Через манипуляции') scores.Кукловод += 1;
+      if (answers[9] === 'Выгода важнее') scores.Хищник += 1;
+      if (answers[10] === 'Учусь') scores.Оракул += 1;
+      if (answers[11] === 'Стремлюсь') scores.Герой += 1;
+      if (answers[12] === 'Долгосрочно') scores.Стратег += 1;
+      if (answers[13] === 'Контролирую') scores.Исполнитель += 1;
+      if (answers[14] === 'По влиянию') scores.Кукловод += 1;
+      if (answers[15] === 'Уничтожаю') scores.Хищник += 1;
+      if (answers[16] === 'Ошибки') scores.Оракул += 1;
+      if (answers[17] === 'Проверяю') scores.Наблюдатель += 1;
+      if (answers[18] === 'Жёстко') scores.Стратег += 1;
+      if (answers[19] === 'Использую') scores.Провокатор += 1;
+      return Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+    }
+
+    function getArchetypeRecommendations(archetype) {
+      return archetypeRecommendations[archetype] || 'Действуй с расчётом.';
+    }
+
     function initArchetype() {
       try {
-        console.log('Инициализация Архетипов');
         const archetypeResult = document.getElementById('archetype-result');
         let archetype = localStorage.getItem('archetype') || '';
         if (archetype) {
           archetypeResult.innerHTML = `Ваш архетип: ${archetype}<br>${getArchetypeRecommendations(archetype)}`;
         }
-        console.log('Архетипы инициализированы');
       } catch (e) {
         showError('archetype', 'Ошибка инициализации: ' + e.message);
-        console.error('Ошибка инициализации Архетипов:', e);
       }
     }
 
-
-function openArchetypeModal() {
+    function openArchetypeModal() {
       try {
         openModal('archetype-modal-template', 'archetype-modal');
         const questionsDiv = document.getElementById('questions');
-        const questions = [
-          { text: 'Как вы принимаете решения?', options: ['Логика', 'Эмоции', 'Интуиция', 'Анализ'] },
-          { text: 'Как вы общаетесь с людьми?', options: ['Прямо', 'Осторожно', 'Манипулятивно', 'Открыто'] },
-          { text: 'Ваша цель в конфликте?', options: ['Победа', 'Компромисс', 'Избежание', 'Контроль'] }
-        ];
-        questionsDiv.innerHTML = questions.map((q, i) => `
+        questionsDiv.innerHTML = archetypeQuestions.map((q, i) => `
           <div>
             <p>${q.text}</p>
-            ${q.options.map(opt => `<button onclick="selectAnswer(${i}, '${opt}')">${opt}</button>`).join('')}
+            ${q.options.map(opt => `<button onclick="selectAnswer(${i}, '${opt}', -1)">${opt}</button>`).join('')}
           </div>
         `).join('');
         showError('archetype-modal', '');
-        console.log('Тест архетипов открыт');
       } catch (e) {
         showError('archetype-modal', 'Не удалось открыть тест: ' + e.message);
-        console.error('Ошибка открытия теста:', e);
       }
     }
 
-    window.selectAnswer = (questionIndex, answer) => {
+    // Карта стратегии (продолжение)
+function initStrategy() {
+  try {
+    const strategyList = document.getElementById('strategy-list');
+    let strategies = JSON.parse(localStorage.getItem('strategies') || '[]');
+
+    window.updateStrategyPeopleSelect = () => {
       try {
-        let answers = JSON.parse(localStorage.getItem('archetypeAnswers') || '{}');
-        answers[questionIndex] = answer;
-        localStorage.setItem('archetypeAnswers', JSON.stringify(answers));
-        console.log('Ответ сохранён:', { questionIndex, answer });
+        const peopleSelect = document.getElementById('strategy-people');
+        if (!peopleSelect) return;
+        peopleSelect.innerHTML = '<option value="">Выберите человека</option>';
+        const people = JSON.parse(localStorage.getItem('people') || '[]');
+        people.forEach(person => {
+          const option = document.createElement('option');
+          option.value = person.name;
+          option.textContent = person.name;
+          peopleSelect.appendChild(option);
+        });
       } catch (e) {
-        showError('archetype-modal', 'Не удалось сохранить ответ: ' + e.message);
-        console.error('Ошибка сохранения ответа:', e);
+        showError('strategy', 'Не удалось обновить список людей: ' + e.message);
       }
     };
 
-    window.submitArchetype = () => {
+    const renderStrategies = () => {
       try {
-        const answers = JSON.parse(localStorage.getItem('archetypeAnswers') || '{}');
-        if (Object.keys(answers).length < 3) {
-          showError('archetype-modal', 'Ответьте на все вопросы');
-          return;
-        }
-        const archetype = determineArchetype(answers);
-        localStorage.setItem('archetype', archetype);
-        document.getElementById('archetype-result').innerHTML = `Ваш архетип: ${archetype}<br>${getArchetypeRecommendations(archetype)}`;
-        closeModal('archetype-modal');
-        logActivity(`Определён архетип: ${archetype}`);
-        showError('archetype', '');
+        strategyList.innerHTML = '';
+        strategies.forEach((strategy, index) => {
+          const node = document.createElement('div');
+          node.className = 'strategy-node';
+          node.innerHTML = `
+            <div>
+              <strong>Цель: ${strategy.goal}</strong><br>
+              Люди: ${strategy.people.join(', ') || 'Нет'}<br>
+              Ресурсы: ${strategy.resources || 'Нет'}<br>
+              Рычаги: ${strategy.levers || 'Нет'}<br>
+              Препятствия: ${strategy.obstacles || 'Нет'}<br>
+              Действия: ${strategy.actions || 'Нет'}<br>
+              Статус: ${strategy.status}<br>
+              Симуляция: ${simulateOutcome(strategy)}<br>
+              <input type="checkbox" ${strategy.completed ? 'checked' : ''} onchange="toggleStrategy(${index})">
+              <button onclick="deleteStrategy(${index})">❌</button>
+              <button onclick="addSubStrategy(${index})">Добавить подцель</button>
+            </div>
+            <div class="strategy-branch">
+              ${renderSubStrategies(strategy.subStrategies || [], index)}
+            </div>
+          `;
+          strategyList.appendChild(node);
+        });
+        window.renderAnalytics();
+        showError('strategy', '');
       } catch (e) {
-        showError('archetype-modal', 'Не удалось определить архетип: ' + e.message);
-        console.error('Ошибка определения архетипа:', e);
+        showError('strategy', 'Не удалось отобразить стратегии: ' + e.message);
       }
     };
 
-    function determineArchetype(answers) {
-      const scores = { Strategist: 0, Manipulator: 0, Leader: 0 };
-      if (answers[0] === 'Логика' || answers[0] === 'Анализ') scores.Strategist += 1;
-      if (answers[1] === 'Манипулятивно') scores.Manipulator += 1;
-      if (answers[2] === 'Победа' || answers[2] === 'Контроль') scores.Leader += 1;
-      return Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
-    }
+    const renderSubStrategies = (subStrategies, parentIndex) => {
+      return subStrategies.map((sub, subIndex) => `
+        <div class="strategy-node">
+          <strong>Подцель: ${sub.goal}</strong><br>
+          Люди: ${sub.people.join(', ') || 'Нет'}<br>
+          Ресурсы: ${sub.resources || 'Нет'}<br>
+          Рычаги: ${sub.levers || 'Нет'}<br>
+          Препятствия: ${sub.obstacles || 'Нет'}<br>
+          Действия: ${sub.actions || 'Нет'}<br>
+          Статус: ${sub.status}<br>
+          Симуляция: ${simulateOutcome(sub)}<br>
+          <input type="checkbox" ${sub.completed ? 'checked' : ''} onchange="toggleSubStrategy(${parentIndex}, ${subIndex})">
+          <button onclick="deleteSubStrategy(${parentIndex}, ${subIndex})">❌</button>
+        </div>
+      `).join('');
+    };
 
-    function getArchetypeRecommendations(archetype) {
-      const recommendations = {
-        Strategist: 'Создавай миф о себе, планируй на три шага вперёд (Макиавелли).',
-        Manipulator: 'Управляй эмоциями других, создавай иллюзию выбора (Ницше).',
-        Leader: 'Будь осью, вокруг которой вращаются, задавай правила (Сунь-цзы).'
-      };
-      return recommendations[archetype] || 'Действуй с холодным расчётом.';
-    }
-
-    // Карта стратегии
-    function initStrategy() {
+    const simulateOutcome = (strategy) => {
       try {
-        console.log('Инициализация Карты стратегии');
-        const strategyList = document.getElementById('strategy-list');
-        let strategies = JSON.parse(localStorage.getItem('strategies') || '[]');
-
-        window.updateStrategyPeopleSelect = () => {
-          try {
-            const peopleSelect = document.getElementById('strategy-people');
-            if (!peopleSelect) return;
-            const people = JSON.parse(localStorage.getItem('people') || '[]');
-            peopleSelect.innerHTML = '<option value="">Выберите человека</option>';
-            people.forEach(person => {
-              const option = document.createElement('option');
-              option.value = person.name;
-              option.textContent = person.name;
-              peopleSelect.appendChild(option);
-            });
-            console.log('Список людей для стратегий обновлён');
-          } catch (e) {
-            showError('strategy', 'Не удалось обновить список людей: ' + e.message);
-            console.error('Ошибка обновления списка людей:', e);
+        const people = JSON.parse(localStorage.getItem('people') || '[]');
+        let successChance = 50;
+        strategy.people.forEach(name => {
+          const person = people.find(p => p.name === name);
+          if (person) {
+            successChance += person.karma / 10;
+            if (person.status === 'hostile') successChance -= 20;
+            if (person.tags.includes('💰 Ресурс')) successChance += 15;
+            if (person.tags.includes('🪨 Балласт')) successChance -= 10;
           }
-        };
-
-        const renderStrategies = () => {
-          try {
-            strategyList.innerHTML = '';
-            strategies.forEach((strategy, index) => {
-              const div = document.createElement('div');
-              div.className = 'strategy-node';
-              const scenario = simulateScenario(strategy);
-              div.innerHTML = `
-                <strong>Цель: ${strategy.goal}</strong> (Статус: ${strategy.status}, Люди: ${strategy.people || 'нет'})<br>
-                Ресурсы: ${strategy.resources || 'нет'}<br>
-                <div class="strategy-branch">
-                  <div class="strategy-node">Рычаги: ${strategy.levers || 'нет'}</div>
-                  <div class="strategy-node">Препятствия: ${strategy.obstacles || 'нет'}</div>
-                  <div class="strategy-node">Механизмы: ${strategy.mechanisms || 'нет'}</div>
-                </div>
-                Прогноз: ${scenario}<br>
-                <button onclick="deleteStrategy(${index})">❌</button>
-              `;
-              strategyList.appendChild(div);
-            });
-            window.renderAnalytics();
-            showError('strategy', '');
-            console.log('Стратегии отображены:', strategies);
-          } catch (e) {
-            showError('strategy', 'Не удалось отобразить стратегии: ' + e.message);
-            console.error('Ошибка рендеринга стратегий:', e);
-          }
-        };
-
-        function simulateScenario(strategy) {
-          try {
-            const people = JSON.parse(localStorage.getItem('people') || '[]');
-            const person = people.find(p => p.name === strategy.people);
-            let score = 0;
-            if (person) {
-              score += person.status === 'loyal' ? 20 : person.status === 'neutral' ? 10 : -10;
-              score += person.karma / 2;
-              if (person.tags.includes('💰 Ресурс')) score += 15;
-              if (person.tags.includes('🪨 Балласт')) score -= 15;
-            }
-            if (strategy.resources) score += 10;
-            if (strategy.levers) score += 10;
-            if (strategy.obstacles) score -= 5;
-            if (strategy.mechanisms) score += 10;
-            return score > 30 ? 'Высокий шанс успеха' : score > 0 ? 'Умеренный шанс' : 'Низкий шанс, пересмотрите';
-          } catch (e) {
-            console.error('Ошибка симуляции сценария:', e);
-            return 'Ошибка прогноза';
-          }
-        }
-
-        window.addStrategy = () => {
-          try {
-            const goal = document.getElementById('strategy-goal').value.trim();
-            const people = document.getElementById('strategy-people').value;
-            const resources = document.getElementById('strategy-resources').value.trim();
-            const levers = document.getElementById('strategy-levers').value.trim();
-            const obstacles = document.getElementById('strategy-obstacles').value.trim();
-            const mechanisms = document.getElementById('strategy-mechanisms').value.trim();
-            const status = document.getElementById('strategy-status').value;
-            if (goal) {
-              strategies.push({ goal, people, resources, levers, obstacles, mechanisms, status });
-              localStorage.setItem('strategies', JSON.stringify(strategies));
-              document.getElementById('strategy-goal').value = '';
-              document.getElementById('strategy-people').value = '';
-              document.getElementById('strategy-resources').value = '';
-              document.getElementById('strategy-levers').value = '';
-              document.getElementById('strategy-obstacles').value = '';
-              document.getElementById('strategy-mechanisms').value = '';
-              document.getElementById('strategy-status').value = 'plan';
-              renderStrategies();
-              logActivity(`Добавлена стратегия: ${goal}`);
-              closeModal('strategy-modal');
-              showError('strategy', '');
-            } else {
-              showError('strategy-modal', 'Введите цель стратегии');
-            }
-          } catch (e) {
-            showError('strategy-modal', 'Не удалось добавить стратегию: ' + e.message);
-            console.error('Ошибка добавления стратегии:', e);
-          }
-        };
-
-        window.deleteStrategy = (index) => {
-          try {
-            const goal = strategies[index].goal;
-            strategies.splice(index, 1);
-            localStorage.setItem('strategies', JSON.stringify(strategies));
-            renderStrategies();
-            logActivity(`Удалена стратегия: ${goal}`);
-            showError('strategy', '');
-          } catch (e) {
-            showError('strategy', 'Не удалось удалить стратегию: ' + e.message);
-            console.error('Ошибка удаления стратегии:', e);
-          }
-        };
-
-        window.updateStrategyPeopleSelect();
-        renderStrategies();
-        console.log('Карта стратегии инициализирована');
+        });
+        if (strategy.resources) successChance += 10;
+        if (strategy.obstacles) successChance -= 10;
+        successChance = Math.max(0, Math.min(100, successChance));
+        return `Вероятность успеха: ${successChance.toFixed(0)}%`;
       } catch (e) {
-        showError('strategy', 'Ошибка инициализации: ' + e.message);
-        console.error('Ошибка инициализации Стратегий:', e);
+        return 'Ошибка симуляции';
       }
-    }
+    };
 
-    function openStrategyModal() {
+    window.addStrategy = () => {
+      try {
+        const goal = document.getElementById('strategy-goal').value.trim();
+        const people = Array.from(document.getElementById('strategy-people').selectedOptions).map(opt => opt.value);
+        const resources = document.getElementById('strategy-resources').value.trim();
+        const levers = document.getElementById('strategy-levers').value.trim();
+        const obstacles = document.getElementById('strategy-obstacles').value.trim();
+        const actions = document.getElementById('strategy-actions').value.trim();
+        const status = document.getElementById('strategy-status').value;
+        if (goal) {
+          strategies.push({
+            goal,
+            people,
+            resources,
+            levers,
+            obstacles,
+            actions,
+            status,
+            completed: false,
+            subStrategies: []
+          });
+          localStorage.setItem('strategies', JSON.stringify(strategies));
+          closeModal('strategy-modal');
+          renderStrategies();
+          logActivity(`Добавлена стратегия: ${goal}`);
+          showError('strategy', '');
+        } else {
+          showError('strategy-modal', 'Введите цель');
+        }
+      } catch (e) {
+        showError('strategy-modal', 'Не удалось добавить стратегию: ' + e.message);
+      }
+    };
+
+    window.addSubStrategy = (parentIndex) => {
       try {
         openModal('strategy-modal-template', 'strategy-modal');
-        window.updateStrategyPeopleSelect();
+        const modal = document.getElementById('strategy-modal');
+        modal.dataset.parentIndex = parentIndex;
         showError('strategy-modal', '');
-        console.log('Модальное окно стратегии открыто');
       } catch (e) {
-        showError('strategy-modal', 'Не удалось открыть форму стратегии: ' + e.message);
-        console.error('Ошибка открытия модального окна:', e);
-      }
-    }
-
-    // Теневая аналитика
-    window.renderAnalytics = () => {
-      try {
-        console.log('Обновление аналитики');
-        const analyticsResults = document.getElementById('analytics-results');
-        if (!analyticsResults) return;
-        const people = JSON.parse(localStorage.getItem('people') || '[]');
-        const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-        const plans = JSON.parse(localStorage.getItem('plans') || '[]');
-        const strategies = JSON.parse(localStorage.getItem('strategies') || '[]');
-        const exercises = JSON.parse(localStorage.getItem('exercises') || '[]');
-        let results = '<h3>Теневая аналитика</h3><ul>';
-
-        // Окружение
-        const negativeKarma = people.filter(p => p.karma < 0);
-        results += negativeKarma.length > 0
-          ? `<li>Люди с отрицательной кармой: ${negativeKarma.map(p => `${p.name} (${p.karma})`).join(', ')}. Рекомендация: Исключите слабые альянсы (Сунь-цзы).</li>`
-          : '<li>Нет людей с отрицательной кармой.</li>';
-
-        people.forEach(person => {
-          person.tags.forEach(tag => {
-            if (codeRecommendations[tag]) {
-              results += `<li>${person.name} (${tag}): ${codeRecommendations[tag]}</li>`;
-            }
-          });
-        });
-
-        // Финансы
-        const last30Days = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-        const recentTransactions = transactions.filter(t => new Date(t.date) >= last30Days);
-        const income = recentTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-        const expense = recentTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-        const total = income + expense;
-        const percentage = total ? (income / total * 100).toFixed(2) : 0;
-        results += `<li>Финансовая эффективность: ${percentage}%. ${
-          percentage > 50 ? 'Хорошо, продолжайте контролировать ресурсы (Макиавелли).' : 'Требует внимания, сократите ненужные расходы (Сунь-цзы).'
-        }</li>`;
-
-        // План дня
-        const highPriority = plans.filter(p => p.priority === 'high');
-        results += highPriority.length > 0
-          ? `<li>Приоритетные задачи: ${highPriority.map(p => p.text).join(', ')}. Сфокусируйтесь на ключевых целях (Ницше).</li>`
-          : '<li>Нет приоритетных задач. Добавьте цели для дисциплины.</li>';
-
-        // Физо
-        const recentExercises = exercises.filter(e => new Date(e.date) >= last30Days);
-        const types = [...new Set(recentExercises.map(e => e.type))];
-        results += types.length > 0
-          ? `<li>Физическая активность: ${types.join(', ')}. Поддерживайте дисциплину (Ницше: тело — основа силы).</li>`
-          : '<li>Нет активности. Начните тренировки для энергии.</li>';
-
-        // Стратегии
-        const activeStrategies = strategies.filter(s => s.status === 'in-progress');
-        results += activeStrategies.length > 0
-          ? `<li>Активные стратегии: ${activeStrategies.map(s => s.goal).join(', ')}. Создавайте рычаги влияния (Макиавелли).</li>`
-          : '<li>Нет активных стратегий. Планируйте на три шага вперёд (Сунь-цзы).</li>';
-
-        results += '</ul>';
-        analyticsResults.innerHTML = results;
-        logActivity('Обновлена аналитика');
-        showError('analytics', '');
-        console.log('Аналитика обновлена');
-      } catch (e) {
-        showError('analytics', 'Не удалось обновить аналитику: ' + e.message);
-        console.error('Ошибка аналитики:', e);
+        showError('strategy', 'Не удалось открыть модальное окно: ' + e.message);
       }
     };
 
-    // Напоминания
-    function initReminders() {
+    window.toggleStrategy = (index) => {
       try {
-        console.log('Инициализация Напоминаний');
-        const reminderText = document.getElementById('reminder-text');
-        const reminderList = document.getElementById('reminder-list');
-        let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
-
-        const renderReminders = () => {
-          try {
-            reminderList.innerHTML = '';
-            tasks.forEach((task, index) => {
-              const li = document.createElement('li');
-              li.innerHTML = `
-                ${task.text} (${new Date(task.created).toLocaleDateString()})
-                <button onclick="deleteReminder(${index})">❌</button>
-              `;
-              reminderList.appendChild(li);
-            });
-            window.renderAnalytics();
-            showError('reminders', '');
-            console.log('Напоминания отображены:', tasks);
-          } catch (e) {
-            showError('reminders', 'Не удалось отобразить напоминания: ' + e.message);
-            console.error('Ошибка рендеринга напоминаний:', e);
-          }
-        };
-
-        window.addReminder = () => {
-          try {
-            const text = reminderText.value.trim();
-            if (text) {
-              tasks.push({ text, created: new Date().toISOString(), completed: false });
-              localStorage.setItem('tasks', JSON.stringify(tasks));
-              reminderText.value = '';
-              renderReminders();
-              logActivity(`Добавлено напоминание: ${text}`);
-              showError('reminders', '');
-            } else {
-              showError('reminders', 'Введите текст напоминания');
-            }
-          } catch (e) {
-            showError('reminders', 'Не удалось добавить напоминание: ' + e.message);
-            console.error('Ошибка добавления напоминания:', e);
-          }
-        };
-
-        window.deleteReminder = (index) => {
-          try {
-            const text = tasks[index].text;
-            tasks.splice(index, 1);
-            localStorage.setItem('tasks', JSON.stringify(tasks));
-            renderReminders();
-            logActivity(`Удалено напоминание: ${text}`);
-            showError('reminders', '');
-          } catch (e) {
-            showError('reminders', 'Не удалось удалить напоминание: ' + e.message);
-            console.error('Ошибка удаления напоминания:', e);
-          }
-        };
-
-        renderReminders();
-        console.log('Напоминания инициализированы');
+        strategies[index].completed = !strategies[index].completed;
+        strategies[index].status = strategies[index].completed ? 'completed' : 'in-progress';
+        localStorage.setItem('strategies', JSON.stringify(strategies));
+        renderStrategies();
+        logActivity(`Стратегия ${strategies[index].goal}: ${strategies[index].completed ? 'Выполнена' : 'Отменена'}`);
       } catch (e) {
-        showError('reminders', 'Ошибка инициализации: ' + e.message);
-        console.error('Ошибка инициализации Напоминаний:', e);
+        showError('strategy', 'Не удалось изменить статус: ' + e.message);
       }
+    };
+
+    window.toggleSubStrategy = (parentIndex, subIndex) => {
+      try {
+        strategies[parentIndex].subStrategies[subIndex].completed = !strategies[parentIndex].subStrategies[subIndex].completed;
+        strategies[parentIndex].subStrategies[subIndex].status = strategies[parentIndex].subStrategies[subIndex].completed ? 'completed' : 'in-progress';
+        localStorage.setItem('strategies', JSON.stringify(strategies));
+        renderStrategies();
+        logActivity(`Подцель ${strategies[parentIndex].subStrategies[subIndex].goal}: ${strategies[parentIndex].subStrategies[subIndex].completed ? 'Выполнена' : 'Отменена'}`);
+      } catch (e) {
+        showError('strategy', 'Не удалось изменить статус подцели: ' + e.message);
+      }
+    };
+
+    window.deleteStrategy = (index) => {
+      try {
+        const goal = strategies[index].goal;
+        strategies.splice(index, 1);
+        localStorage.setItem('strategies', JSON.stringify(strategies));
+        renderStrategies();
+        logActivity(`Удалена стратегия: ${goal}`);
+        showError('strategy', '');
+      } catch (e) {
+        showError('strategy', 'Не удалось удалить стратегию: ' + e.message);
+      }
+    };
+
+    window.deleteSubStrategy = (parentIndex, subIndex) => {
+      try {
+        const goal = strategies[parentIndex].subStrategies[subIndex].goal;
+        strategies[parentIndex].subStrategies.splice(subIndex, 1);
+        localStorage.setItem('strategies', JSON.stringify(strategies));
+        renderStrategies();
+        logActivity(`Удалена подцель: ${goal}`);
+        showError('strategy', '');
+      } catch (e) {
+        showError('strategy', 'Не удалось удалить подцель: ' + e.message);
+      }
+    };
+
+    window.openStrategyModal = () => {
+      try {
+        openModal('strategy-modal-template', 'strategy-modal');
+        updateStrategyPeopleSelect();
+        showError('strategy-modal', '');
+      } catch (e) {
+        showError('strategy', 'Не удалось открыть модальное окно: ' + e.message);
+      }
+    };
+
+    renderStrategies();
+    updateStrategyPeopleSelect();
+  } catch (e) {
+    showError('strategy', 'Ошибка инициализации: ' + e.message);
+  }
+}
+
+// Теневая аналитика
+function renderAnalytics() {
+  try {
+    const analyticsResults = document.getElementById('analytics-results');
+    const people = JSON.parse(localStorage.getItem('people') || '[]');
+    const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+    const plans = JSON.parse(localStorage.getItem('plans') || '[]');
+    const strategies = JSON.parse(localStorage.getItem('strategies') || '[]');
+    const exercises = JSON.parse(localStorage.getItem('exercises') || '[]');
+    const ruleStats = JSON.parse(localStorage.getItem('currentRule') || '{}');
+
+    const last30Days = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const completedPlans = plans.filter(p => p.completed).length;
+    const totalPlans = plans.length;
+    const income = transactions.filter(t => t.type === 'income' && new Date(t.date) >= last30Days).reduce((sum, t) => sum + t.amount, 0);
+    const expense = transactions.filter(t => t.type === 'expense' && new Date(t.date) >= last30Days).reduce((sum, t) => sum + t.amount, 0);
+    const allies = people.filter(p => p.status === 'loyal').length;
+    const enemies = people.filter(p => p.status === 'hostile').length;
+    const neutrals = people.filter(p => p.status === 'neutral').length;
+    const contracts = people.filter(p => p.status === 'contract').length;
+    const activeStrategies = strategies.filter(s => s.status === 'in-progress').length;
+    const completedStrategies = strategies.filter(s => s.status === 'completed').length;
+    const exerciseDays = [...new Set(exercises.map(e => new Date(e.date).toLocaleDateString()))].length;
+
+    const analytics = [
+      `Продуктивность: ${totalPlans ? (completedPlans / totalPlans * 100).toFixed(2) : 0}% задач выполнено (${completedPlans}/${totalPlans})`,
+      `Финансы: Доходы ${income}, Расходы ${expense}, Баланс ${income - expense}`,
+      `Окружение: Союзники ${allies}, Враги ${enemies}, Нейтралы ${neutrals}, Контракты ${contracts}`,
+      `Стратегии: Активных ${activeStrategies}, Завершённых ${completedStrategies}`,
+      `Физо: Активных дней ${exerciseDays}/30`,
+      `Правило дня: Придержался ${ruleStats.adhered || 0}, Нарушил ${ruleStats.violated || 0}`
+    ];
+
+    const recommendations = [];
+    if (completedPlans / totalPlans < 0.5 && totalPlans > 0) recommendations.push('Сфокусируйся на выполнении задач (Ядро: Победа — это система, а не случай).');
+    if (income < expense) recommendations.push('Сократите расходы (Ядро: Ресурсы важнее чувств).');
+    if (enemies > allies) recommendations.push('Нейтрализуй врагов или переведи их в нейтралы (Ядро: Держи врагов ближе, чем друзей).');
+    if (exerciseDays < 10) recommendations.push('Увеличь физическую активность (Ядро: Сила в дисциплине).');
+    if (ruleStats.violated > ruleStats.adhered) recommendations.push('Пересмотри подход к правилам дня (Ядро: Контроль над собой — контроль над всем).');
+
+    analyticsResults.innerHTML = `
+      <h3>Аналитика</h3>
+      <ul>${analytics.map(a => `<li>${a}</li>`).join('')}</ul>
+      <h3>Рекомендации</h3>
+      <ul>${recommendations.map(r => `<li>${r}</li>`).join('')}</ul>
+    `;
+    showError('analytics', '');
+  } catch (e) {
+    showError('analytics', 'Не удалось отобразить аналитику: ' + e.message);
+  }
+}
+
+// Напоминания
+function initReminders() {
+  try {
+    const reminderText = document.getElementById('reminder-text');
+    const reminderList = document.getElementById('reminder-list');
+    let reminders = JSON.parse(localStorage.getItem('reminders') || '[]');
+
+    const renderReminders = () => {
+      try {
+        reminderList.innerHTML = '';
+        reminders.forEach((reminder, index) => {
+          const li = document.createElement('li');
+          li.innerHTML = `${reminder.text} (${new Date(reminder.created).toLocaleDateString()})
+            <button onclick="deleteReminder(${index})">❌</button>`;
+          reminderList.appendChild(li);
+        });
+        showError('reminders', '');
+      } catch (e) {
+        showError('reminders', 'Не удалось отобразить напоминания: ' + e.message);
+      }
+    };
+
+    window.addReminder = () => {
+      try {
+        const text = reminderText.value.trim();
+        if (text) {
+          reminders.push({ text, created: new Date().toISOString() });
+          localStorage.setItem('reminders', JSON.stringify(reminders));
+          reminderText.value = '';
+          renderReminders();
+          logActivity(`Добавлено напоминание: ${text}`);
+          showError('reminders', '');
+        } else {
+          showError('reminders', 'Введите текст напоминания');
+        }
+      } catch (e) {
+        showError('reminders', 'Не удалось добавить напоминание: ' + e.message);
+      }
+    };
+
+    window.deleteReminder = (index) => {
+      try {
+        const text = reminders[index].text;
+        reminders.splice(index, 1);
+        localStorage.setItem('reminders', JSON.stringify(reminders));
+        renderReminders();
+        logActivity(`Удалено напоминание: ${text}`);
+        showError('reminders', '');
+      } catch (e) {
+        showError('reminders', 'Не удалось удалить напоминание: ' + e.message);
+      }
+    };
+
+    renderReminders();
+  } catch (e) {
+    showError('reminders', 'Ошибка инициализации: ' + e.message);
+  }
+}
+
+// Проверка бездействия
+function checkInactivity() {
+  try {
+    const lastActivity = localStorage.getItem('lastActivity') || new Date().toISOString();
+    const now = new Date();
+    const diff = (now - new Date(lastActivity)) / (1000 * 60 * 60 * 24);
+    const plans = JSON.parse(localStorage.getItem('plans') || '[]');
+    const exercises = JSON.parse(localStorage.getItem('exercises') || '[]');
+    const strategies = JSON.parse(localStorage.getItem('strategies') || '[]');
+
+    if (diff >= 3 && plans.length === 0 && exercises.length === 0 && strategies.length === 0) {
+      const notification = document.getElementById('critical-notification');
+      notification.style.display = 'block';
+      notification.textContent = 'Штаб: Ты теряешь контроль. Добавь задачу, цель или физо. Действуй или проиграешь.';
+      logActivity('Критическое уведомление: Бездействие более 3 дней');
+    } else {
+      document.getElementById('critical-notification').style.display = 'none';
     }
+    localStorage.setItem('lastActivity', now.toISOString());
+  } catch (e) {
+    showError('notification', 'Ошибка проверки бездействия: ' + e.message);
+  }
+}
 
-    // Инициализация
-    document.addEventListener('DOMContentLoaded', () => {
-      console.log('Страница загружена, начинаем инициализацию');
-      initRuleOfDay();
-      initReference();
-      initPlan();
-      initEnvironment();
-      initFitness();
-      initFinance();
-      initArchetype();
-      initStrategy();
-      initReminders();
-      console.log('Все модули инициализированы');
+// Инициализация всех модулей
+document.addEventListener('DOMContentLoaded', () => {
+  initRuleOfDay();
+  initKnowledge();
+  initPlan();
+  initEnvironment();
+  initFitness();
+  initFinance();
+  initArchetype();
+  initStrategy();
+  initReminders();
+  renderAnalytics();
+  checkInactivity();
 
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/service-worker.js')
-          .then(() => {
-            console.log('Service Worker зарегистрирован');
-            logActivity('Service Worker зарегистрирован');
-          })
-          .catch(err => {
-            console.error('Ошибка регистрации Service Worker:', err);
-            showError('analytics', 'Ошибка Service Worker: ' + err.message);
-          });
-      }
-    });
+  // Регистрация Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(reg => {
+        console.log('Service Worker зарегистрирован:', reg);
+        logActivity('Service Worker зарегистрирован');
+      })
+      .catch(err => {
+        console.error('Ошибка регистрации Service Worker:', err);
+        showError('analytics', 'Ошибка Service Worker: ' + err.message);
+      });
+  }
+});
   </script>
 </body>
 </html>
