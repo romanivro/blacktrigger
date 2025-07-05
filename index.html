@@ -513,5 +513,35 @@ const updateFinanceChart = () => {
       console.log('Все модули инициализированы');
     });
   </script>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Продуктивность</title>
+  <link rel="manifest" href="/manifest.json">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+  <!-- Остальной код стилей без изменений -->
+</head>
+<body>
+  <div class="module">
+    <button onclick="initEruda()">Открыть консоль</button>
+  </div>
+  <!-- Остальные модули без изменений -->
+  <script>
+    window.initEruda = () => {
+      try {
+        if (typeof eruda !== 'undefined') {
+          eruda.init();
+          eruda.show();
+          console.log('Eruda инициализирована');
+        } else {
+          console.error('Eruda не загружена');
+        }
+      } catch (e) {
+        console.error('Ошибка инициализации Eruda:', e);
+      }
+    };
+    // Остальной JavaScript без изменений
+  </script>
 </body>
 </html>
