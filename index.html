@@ -165,7 +165,7 @@
     </div>
   </template>
 
-  <!-- Модальное окно для стратегии -->
+ <!-- Модальное окно для стратегии -->
   <template id="strategy-modal-template">
     <div class="modal" id="strategy-modal">
       <div class="modal-content">
@@ -340,7 +340,7 @@
       }
     };
 
-// Окружение
+    // Окружение
     function initEnvironment() {
       try {
         const personName = document.getElementById('person-name');
@@ -351,7 +351,8 @@
         const personList = document.getElementById('person-list');
         let people = JSON.parse(localStorage.getItem('people') || '[]');
 
-        // Миграция данных
+
+// Миграция данных
         people = people.map(person => ({
           ...person,
           tags: Array.isArray(person.tags) ? person.tags : [],
@@ -493,7 +494,7 @@
       }
     };
 
-window.addExercise = () => {
+    window.addExercise = () => {
       try {
         const type = exerciseType.value.trim();
         const result = parseInt(exerciseResult.value);
@@ -578,7 +579,7 @@ function initFinance() {
       }
     };
 
-    const updateFinanceChart = () => {
+const updateFinanceChart = () => {
       try {
         const dates = [...new Set(transactions.map(t => new Date(t.date).toLocaleDateString()))];
         const incomeData = dates.map(date => {
@@ -784,7 +785,7 @@ function initStrategy() {
       }
     };
 
-const renderStrategies = () => {
+    const renderStrategies = () => {
       try {
         strategyList.innerHTML = '';
         strategies.forEach((strategy, index) => {
@@ -839,7 +840,7 @@ const renderStrategies = () => {
       }
     };
 
-    window.deleteStrategy = (index) => {
+window.deleteStrategy = (index) => {
       try {
         const goal = strategies[index].goal;
         strategies.splice(index, 1);
