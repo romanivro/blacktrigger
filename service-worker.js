@@ -1,8 +1,9 @@
-const CACHE_NAME = 'productivity-v4';
+const CACHE_NAME = 'blacktrigger-v1';
 const urlsToCache = [
   '/',
   '/index.html',
-  'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'
+  'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js',
+  'https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js'
 ];
 
 self.addEventListener('install', event => {
@@ -19,14 +20,8 @@ self.addEventListener('install', event => {
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
-      .then(response => {
-        if (response) {
-          console.log('Загружено из кэша:', event.request.url);
-          return response;
-        }
-        return fetch(event.request)
-          .catch(err => console.error('Ошибка fetch:', err));
-      })
+      .then(response => response || fetch(event.request))
+      .catch(err => console.error('Ошибка fetch:', err))
   );
 });
 
