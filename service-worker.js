@@ -1,4 +1,4 @@
-const CACHE_NAME = 'productivity-v3';
+const CACHE_NAME = 'productivity-v4';
 const urlsToCache = [
   '/',
   '/index.html',
