@@ -300,7 +300,7 @@
           });
         };
 
-        window.addPerson = () => {
+window.addPerson = () => {
           try {
             const name = personName.value.trim();
             const status = personStatus.value;
@@ -362,7 +362,7 @@
       }
     }
 
-      // Физо
+    // Физо
     function initFitness() {
       try {
         const exerciseType = document.getElementById('exercise-type');
@@ -503,7 +503,9 @@
           }
         };
 
-        const updateFinanceChart = () => {
+
+
+const updateFinanceChart = () => {
           try {
             const dates = [...new Set(transactions.map(t => new Date(t.date).toLocaleDateString()))];
             const incomeData = dates.map(date => {
@@ -660,7 +662,8 @@
       }
     };
 
-    function determineArchetype(answers) {
+
+function determineArchetype(answers) {
       const scores = {
         Strategist: 0,
         Manipulator: 0,
@@ -685,7 +688,7 @@
       return recommendations[archetype] || 'Следуйте принципам холодного расчёта.';
     }
 
-// Карта стратегии
+    // Карта стратегии
     function initStrategy() {
       try {
         const strategyList = document.getElementById('strategy-list');
@@ -942,7 +945,7 @@
       }
     }
 
-// Инициализация всех модулей
+    // Инициализация всех модулей
     document.addEventListener('DOMContentLoaded', () => {
       initEnvironment();
       initFitness();
