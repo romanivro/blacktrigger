@@ -3,33 +3,75 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Продуктивность</title>
+  <title>BlackTrigger HQ</title>
   <link rel="manifest" href="/manifest.json">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+  <script src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f4; }
-    .module { margin-bottom: 20px; padding: 15px; background: white; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    h2 { margin-top: 0; }
-    input, select, button { padding: 8px; margin: 5px; border-radius: 3px; border: 1px solid #ccc; }
-    button { background: #007bff; color: white; border: none; cursor: pointer; }
+    body {
+      font-family: 'Roboto', Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #e0e0e0;
+    }
+    .module {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #2a2a2a;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    }
+    h2 { margin-top: 0; color: #00b7ff; }
+    input, select, button {
+      padding: 8px;
+      margin: 5px;
+      border-radius: 3px;
+      border: 1px solid #444;
+      background: #333;
+      color: #e0e0e0;
+    }
+    button { background: #007bff; border: none; cursor: pointer; }
     button:hover { background: #0056b3; }
     ul { list-style: none; padding: 0; }
-    li { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-    .error { color: red; font-size: 0.8em; }
-    .profile-card { display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; margin-bottom: 10px; }
+    li { padding: 10px; border-bottom: 1px solid #444; display: flex; justify-content: space-between; align-items: center; }
+    .error { color: #ff4444; font-size: 0.8em; }
+    .profile-card { display: flex; align-items: center; padding: 10px; border: 1px solid #444; margin-bottom: 10px; }
     .profile-card img { width: 50px; height: 50px; border-radius: 50%; margin-right: 10px; }
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
-    .modal-content { background: white; padding: 20px; border-radius: 5px; max-width: 90%; max-height: 90%; overflow-y: auto; }
+    .collapsible { display: none; }
+    .collapsible.active { display: block; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; }
+    .modal-content { background: #2a2a2a; padding: 20px; border-radius: 5px; max-width: 90%; max-height: 90%; overflow-y: auto; color: #e0e0e0; }
     .modal.active { display: flex; }
-    canvas { max-width: 100%; }
+    canvas { max-width: 100%; background: #2a2a2a; padding: 10px; border-radius: 5px; }
     .finance-container { display: flex; justify-content: space-between; }
     .finance-column { width: 48%; }
     .strategy-tree { display: flex; flex-direction: column; align-items: center; }
-    .strategy-node { padding: 10px; border: 1px solid #ddd; margin: 5px; border-radius: 5px; }
+    .strategy-node { padding: 10px; border: 1px solid #444; margin: 5px; border-radius: 5px; }
     .strategy-branch { display: flex; justify-content: space-around; width: 100%; }
+    #network { height: 300px; border: 1px solid #444; border-radius: 5px; }
   </style>
 </head>
 <body>
+  <div class="module">
+    <button onclick="initEruda()">Открыть консоль</button>
+  </div>
+
+  <!-- План дня -->
+  <div class="module" id="plan-module">
+    <h2>План дня</h2>
+    <input type="text" id="plan-text" placeholder="Задача">
+    <select id="plan-priority">
+      <option value="low">Низкий</option>
+      <option value="medium">Средний</option>
+      <option value="high">Высокий</option>
+    </select>
+    <button onclick="addPlan()">Добавить</button>
+    <ul id="plan-list"></ul>
+    <div class="error" id="plan-error"></div>
+  </div>
+
   <!-- Окружение -->
   <div class="module" id="environment-module">
     <h2>Окружение</h2>
@@ -42,6 +84,9 @@
     <select id="person-tags" multiple>
       <option value="💰 Ресурс">💰 Ресурс</option>
       <option value="🪨 Балласт">🪨 Балласт</option>
+      <option value="🧠 Внушаемый">🧠 Внушаемый</option>
+      <option value="🗣️ Болтун">🗣️ Болтун</option>
+      <option value="🧩 Манипулятор">🧩 Манипулятор</option>
     </select>
     <input type="number" id="person-karma" placeholder="Карма (0)" value="0">
     <select id="person-connections" multiple>
@@ -50,6 +95,19 @@
     <button onclick="addPerson()">Добавить</button>
     <div class="error" id="environment-error"></div>
     <ul id="person-list"></ul>
+    <div id="network"></div>
+  </div>
+
+  <!-- Физо -->
+  <div class="module" id="fitness-module">
+    <h2>Физо</h2>
+    <input type="text" id="exercise-type" placeholder="Тип (напр., Отжимания)">
+    <input type="number" id="exercise-result" placeholder="Результат (напр., 20)">
+    <button onclick="addExercise()">Записать</button>
+    <button onclick="toggleCollapsible('exercise-list')">Показать/Скрыть</button>
+    <div class="error" id="fitness-error"></div>
+    <ul id="exercise-list" class="collapsible"></ul>
+    <canvas id="fitness-chart"></canvas>
   </div>
 
   <!-- Доходы и расходы -->
@@ -76,6 +134,14 @@
     <div class="error" id="finance-error"></div>
   </div>
 
+  <!-- Архетипы -->
+  <div class="module" id="archetype-module">
+    <h2>Архетипы</h2>
+    <button onclick="openArchetypeModal()">Пройти тест</button>
+    <div id="archetype-result"></div>
+    <div class="error" id="archetype-error"></div>
+  </div>
+
   <!-- Карта стратегии -->
   <div class="module" id="strategy-module">
     <h2>Карта стратегии</h2>
@@ -92,6 +158,36 @@
     <div class="error" id="analytics-error"></div>
   </div>
 
+  <!-- Напоминания -->
+  <div class="module" id="reminders-module">
+    <h2>Напоминания</h2>
+    <input type="text" id="reminder-text" placeholder="Текст напоминания">
+    <button onclick="addReminder()">Добавить</button>
+    <div class="error" id="reminders-error"></div>
+    <ul id="reminder-list"></ul>
+  </div>
+
+  <!-- Лог активности -->
+  <div class="module" id="activity-module">
+    <h2>Лог активности</h2>
+    <button onclick="toggleCollapsible('activity-list')">Показать/Скрыть</button>
+    <div class="error" id="activity-error"></div>
+    <ul id="activity-list" class="collapsible"></ul>
+  </div>
+
+  <!-- Модальное окно для архетипов -->
+  <template id="archetype-modal-template">
+    <div class="modal" id="archetype-modal">
+      <div class="modal-content">
+        <h2>Тест на архетип</h2>
+        <div id="questions"></div>
+        <button onclick="submitArchetype()">Определить</button>
+        <button onclick="closeModal('archetype-modal')">Закрыть</button>
+        <div class="error" id="archetype-modal-error"></div>
+      </div>
+    </div>
+  </template>
+
   <!-- Модальное окно для стратегии -->
   <template id="strategy-modal-template">
     <div class="modal" id="strategy-modal">
@@ -101,6 +197,15 @@
         <select id="strategy-people">
           <option value="">Выберите человека</option>
         </select>
+        <input type="text" id="strategy-resources" placeholder="Ресурсы">
+        <input type="text" id="strategy-levers" placeholder="Рычаги">
+        <input type="text" id="strategy-obstacles" placeholder="Препятствия">
+        <input type="text" id="strategy-mechanisms" placeholder="Механизмы">
+        <select id="strategy-status">
+          <option value="plan">План</option>
+          <option value="in-progress">В процессе</option>
+          <option value="completed">Завершено</option>
+        </select>
         <button onclick="addStrategy()">Добавить</button>
         <button onclick="closeModal('strategy-modal')">Закрыть</button>
         <div class="error" id="strategy-modal-error"></div>
@@ -108,7 +213,25 @@
     </div>
   </template>
 
-  <script>
+
+<script>
+    // Инициализация Eruda
+    window.initEruda = () => {
+      try {
+        if (typeof eruda !== 'undefined') {
+          eruda.init();
+          eruda.show();
+          console.log('Eruda инициализирована');
+          logActivity('Открыта консоль Eruda');
+        } else {
+          console.error('Eruda не загружена');
+        }
+      } catch (e) {
+        console.error('Ошибка инициализации Eruda:', e);
+        showError('analytics', 'Ошибка Eruda: ' + e.message);
+      }
+    };
+
     // Общие функции
     function showError(module, message) {
       const errorDiv = document.getElementById(`${module}-error`);
@@ -116,6 +239,29 @@
         errorDiv.textContent = message;
         console.log(`Ошибка в ${module}: ${message}`);
       }
+    }
+
+    function logActivity(message) {
+      try {
+        const activityList = document.getElementById('activity-list');
+        if (activityList) {
+          let log = JSON.parse(localStorage.getItem('activityLog') || '[]');
+          const timestamp = new Date().toLocaleString();
+          log.push(`${timestamp}: ${message}`);
+          localStorage.setItem('activityLog', JSON.stringify(log));
+          activityList.innerHTML = log.map(item => `<li>${item}</li>`).join('');
+          showError('activity', '');
+          console.log('Лог активности:', message);
+        }
+      } catch (e) {
+        showError('activity', 'Не удалось записать лог: ' + e.message);
+        console.error('Ошибка лога активности:', e);
+      }
+    }
+
+    function toggleCollapsible(id) {
+      const element = document.getElementById(id);
+      if (element) element.classList.toggle('active');
     }
 
     function openModal(templateId, modalId) {
@@ -135,44 +281,90 @@
       if (modal) modal.remove();
     }
 
-    // Глобальная функция для аналитики
-    window.renderAnalytics = () => {
-      try {
-        const analyticsResults = document.getElementById('analytics-results');
-        if (!analyticsResults) {
-          console.error('Элемент analytics-results не найден');
-          return;
-        }
-        const people = JSON.parse(localStorage.getItem('people') || '[]');
-        const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-        let results = '<h3>Аналитика</h3><ul>';
-
-        const negativeKarma = people.filter(p => p.karma < 0);
-        results += negativeKarma.length > 0
-          ? `<li>Люди с отрицательной кармой: ${negativeKarma.map(p => `${p.name} (${p.karma})`).join(', ')}</li>`
-          : '<li>Нет людей с отрицательной кармой</li>';
-
-        const last30Days = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-        const recentTransactions = transactions.filter(t => new Date(t.date) >= last30Days);
-        const income = recentTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-        const expense = recentTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-        const total = income + expense;
-        const percentage = total ? (income / total * 100).toFixed(2) : 0;
-        results += `<li>Финансовая эффективность: ${percentage}%</li>`;
-
-        analyticsResults.innerHTML = results;
-        console.log('Аналитика обновлена');
-        showError('analytics', '');
-      } catch (e) {
-        showError('analytics', 'Не удалось обновить аналитику: ' + e.message);
-        console.error('Ошибка аналитики:', e);
-      }
+    // Кодекс рекомендаций
+    const codeRecommendations = {
+      '💰 Ресурс': 'Укрепляй альянс, используй для ресурсов и влияния (Макиавелли: контролируй ресурсы).',
+      '🪨 Балласт': 'Сведи контакты к минимуму, исключи из ключевых планов (Сунь-цзы: избегай слабых альянсов).',
+      '🧠 Внушаемый': 'Используй для продвижения идей, но проверяй лояльность (Макиавелли: управляй через убеждение).',
+      '🗣️ Болтун': 'Избегай разглашения, держи дистанцию (Сунь-цзы: скрывай планы).',
+      '🧩 Манипулятор': 'Контролируй взаимодействие, используй их амбиции (Макиавелли: перехитри хитреца).'
     };
+
+    // План дня
+    function initPlan() {
+      try {
+        const planText = document.getElementById('plan-text');
+        const planPriority = document.getElementById('plan-priority');
+        const planList = document.getElementById('plan-list');
+        let plans = JSON.parse(localStorage.getItem('plans') || '[]');
+
+        const renderPlans = () => {
+          try {
+            planList.innerHTML = '';
+            plans.forEach((plan, index) => {
+              const li = document.createElement('li');
+              li.innerHTML = `
+                ${plan.text} (Приоритет: ${plan.priority}, ${new Date(plan.created).toLocaleDateString()})
+                <button onclick="deletePlan(${index})">❌</button>
+              `;
+              planList.appendChild(li);
+            });
+            window.renderAnalytics();
+            showError('plan', '');
+            console.log('План дня отображён:', plans);
+          } catch (e) {
+            showError('plan', 'Не удалось отобразить план: ' + e.message);
+            console.error('Ошибка рендеринга плана:', e);
+          }
+        };
+
+        window.addPlan = () => {
+          try {
+            const text = planText.value.trim();
+            const priority = planPriority.value;
+            if (text) {
+              plans.push({ text, priority, created: new Date().toISOString() });
+              localStorage.setItem('plans', JSON.stringify(plans));
+              planText.value = '';
+              planPriority.value = 'low';
+              renderPlans();
+              logActivity(`Добавлена задача в план: ${text}`);
+              showError('plan', '');
+            } else {
+              showError('plan', 'Введите задачу');
+            }
+          } catch (e) {
+            showError('plan', 'Не удалось добавить задачу: ' + e.message);
+            console.error('Ошибка добавления задачи:', e);
+          }
+        };
+
+        window.deletePlan = (index) => {
+          try {
+            const text = plans[index].text;
+            plans.splice(index, 1);
+            localStorage.setItem('plans', JSON.stringify(plans));
+            renderPlans();
+            logActivity(`Удалена задача: ${text}`);
+            showError('plan', '');
+          } catch (e) {
+            showError('plan', 'Не удалось удалить задачу: ' + e.message);
+            console.error('Ошибка удаления задачи:', e);
+          }
+        };
+
+        renderPlans();
+        console.log('План дня инициализирован');
+      } catch (e) {
+        showError('plan', 'Ошибка инициализации: ' + e.message);
+        console.error('Ошибка инициализации Плана:', e);
+      }
+    }
 
     // Окружение
     function initEnvironment() {
       try {
-        console.log('Инициализация модуля Окружение');
+        console.log('Инициализация Окружения');
         const personName = document.getElementById('person-name');
         const personStatus = document.getElementById('person-status');
         const personTags = document.getElementById('person-tags');
@@ -187,6 +379,7 @@
             people.forEach((person, index) => {
               const tagsDisplay = person.tags.length > 0 ? person.tags.join(', ') : 'нет';
               const connectionsDisplay = person.connections.length > 0 ? person.connections.join(', ') : 'нет';
+              const recommendations = person.tags.map(tag => codeRecommendations[tag] || '').join('<br>');
               const li = document.createElement('li');
               li.className = 'profile-card';
               li.innerHTML = `
@@ -194,16 +387,20 @@
                   <strong>${person.name}</strong> (${person.status}, Карма: ${person.karma})<br>
                   Метки: ${tagsDisplay}<br>
                   Связи: ${connectionsDisplay}<br>
+                  Рекомендации: ${recommendations || 'Нет рекомендаций'}<br>
+                  <button onclick="adjustKarma(${index}, 5)">+5</button>
+                  <button onclick="adjustKarma(${index}, -10)">-10</button>
                   <button onclick="deletePerson(${index})">❌</button>
                 </div>
               `;
               personList.appendChild(li);
             });
             updateConnectionsSelect();
-            if (window.updateStrategyPeopleSelect) window.updateStrategyPeopleSelect();
+            renderNetwork();
+            window.updateStrategyPeopleSelect();
             window.renderAnalytics();
             showError('environment', '');
-            console.log('Список людей отображён:', people);
+            console.log('Люди отображены:', people);
           } catch (e) {
             showError('environment', 'Не удалось отобразить список: ' + e.message);
             console.error('Ошибка рендеринга людей:', e);
@@ -226,6 +423,34 @@
           }
         };
 
+        const renderNetwork = () => {
+          try {
+            const container = document.getElementById('network');
+            if (!container) return;
+            const nodes = people.map((person, index) => ({
+              id: index,
+              label: person.name,
+              color: person.status === 'loyal' ? '#00ff00' : person.status === 'neutral' ? '#ffff00' : '#ff0000'
+            }));
+            const edges = [];
+            people.forEach((person, index) => {
+              person.connections.forEach(connection => {
+                const targetIndex = people.findIndex(p => p.name === connection);
+                if (targetIndex !== -1) {
+                  edges.push({ from: index, to: targetIndex });
+                }
+              });
+            });
+            const data = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+            const options = { nodes: { shape: 'dot', size: 20 }, edges: { arrows: 'to' } };
+            new vis.Network(container, data, options);
+            console.log('Граф связей отображён');
+          } catch (e) {
+            showError('environment', 'Не удалось отобразить граф: ' + e.message);
+            console.error('Ошибка рендеринга графа:', e);
+          }
+        };
+
         window.addPerson = () => {
           try {
             const name = personName.value.trim();
@@ -242,7 +467,8 @@
               personKarma.value = '0';
               Array.from(personConnections.options).forEach(option => option.selected = false);
               renderPeople();
-              console.log('Добавлен человек:', { name, status, tags, karma, connections });
+              logActivity(`Добавлен человек: ${name}`);
+              showError('environment', '');
             } else {
               showError('environment', 'Введите имя');
             }
@@ -252,13 +478,27 @@
           }
         };
 
+        window.adjustKarma = (index, change) => {
+          try {
+            people[index].karma = Math.max(-100, Math.min(100, people[index].karma + change));
+            localStorage.setItem('people', JSON.stringify(people));
+            renderPeople();
+            logActivity(`Изменена карма для ${people[index].name}: ${people[index].karma}`);
+            showError('environment', '');
+          } catch (e) {
+            showError('environment', 'Не удалось изменить карму: ' + e.message);
+            console.error('Ошибка изменения кармы:', e);
+          }
+        };
+
         window.deletePerson = (index) => {
           try {
             const name = people[index].name;
             people.splice(index, 1);
             localStorage.setItem('people', JSON.stringify(people));
             renderPeople();
-            console.log('Удалён человек:', name);
+            logActivity(`Удалён человек: ${name}`);
+            showError('environment', '');
           } catch (e) {
             showError('environment', 'Не удалось удалить человека: ' + e.message);
             console.error('Ошибка удаления человека:', e);
@@ -274,10 +514,119 @@
       }
     }
 
+
+// Физо
+    function initFitness() {
+      try {
+        console.log('Инициализация Физо');
+        const exerciseType = document.getElementById('exercise-type');
+        const exerciseResult = document.getElementById('exercise-result');
+        const exerciseList = document.getElementById('exercise-list');
+        const fitnessChart = document.getElementById('fitness-chart').getContext('2d');
+        let exercises = JSON.parse(localStorage.getItem('exercises') || '[]');
+        let chart;
+
+        const renderExercises = () => {
+          try {
+            exerciseList.innerHTML = '';
+            const types = [...new Set(exercises.map(e => e.type))];
+            types.forEach(type => {
+              const li = document.createElement('li');
+              li.innerHTML = `${type}: ${exercises.filter(e => e.type === type).map(e => `${e.result} (${new Date(e.date).toLocaleDateString()})`).join(', ')}
+                <button onclick="deleteExerciseType('${type}')">❌</button>`;
+              exerciseList.appendChild(li);
+            });
+            updateFitnessChart();
+            window.renderAnalytics();
+            showError('fitness', '');
+            console.log('Упражнения отображены:', exercises);
+          } catch (e) {
+            showError('fitness', 'Не удалось отобразить упражнения: ' + e.message);
+            console.error('Ошибка рендеринга упражнений:', e);
+          }
+        };
+
+        const updateFitnessChart = () => {
+          try {
+            const now = new Date();
+            const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+            const recentExercises = exercises.filter(e => new Date(e.date) >= sevenDaysAgo);
+            const types = [...new Set(recentExercises.map(e => e.type))];
+            const dates = [];
+            for (let i = 6; i >= 0; i--) {
+              const date = new Date(now - i * 24 * 60 * 60 * 1000);
+              dates.push(date.toLocaleDateString());
+            }
+            const datasets = types.map(type => ({
+              label: type,
+              data: dates.map(date => {
+                const exercise = recentExercises.find(e => e.type === type && new Date(e.date).toLocaleDateString() === date);
+                return exercise ? exercise.result : 0;
+              }),
+              borderColor: '#' + Math.floor(Math.random()*16777215).toString(16),
+              fill: false
+            }));
+
+            if (chart) chart.destroy();
+            chart = new Chart(fitnessChart, {
+              type: 'line',
+              data: { labels: dates, datasets },
+              options: { scales: { y: { beginAtZero: true } } }
+            });
+            showError('fitness', '');
+            console.log('График физо обновлён');
+          } catch (e) {
+            showError('fitness', 'Не удалось обновить график: ' + e.message);
+            console.error('Ошибка обновления графика физо:', e);
+          }
+        };
+
+        window.addExercise = () => {
+          try {
+            const type = exerciseType.value.trim();
+            const result = parseInt(exerciseResult.value);
+            if (type && !isNaN(result) && result > 0) {
+              exercises.push({ type, result, date: new Date().toISOString() });
+              localStorage.setItem('exercises', JSON.stringify(exercises));
+              exerciseType.value = '';
+              exerciseResult.value = '';
+              renderExercises();
+              logActivity(`Добавлено упражнение: ${type}, ${result}`);
+              showError('fitness', '');
+            } else {
+              showError('fitness', 'Введите тип и результат (>0)');
+            }
+          } catch (e) {
+            showError('fitness', 'Не удалось добавить упражнение: ' + e.message);
+            console.error('Ошибка добавления упражнения:', e);
+          }
+        };
+
+        window.deleteExerciseType = (type) => {
+          try {
+            exercises = exercises.filter(e => e.type !== type);
+            localStorage.setItem('exercises', JSON.stringify(exercises));
+            renderExercises();
+            logActivity(`Удалены упражнения типа: ${type}`);
+            showError('fitness', '');
+          } catch (e) {
+            showError('fitness', 'Не удалось удалить упражнения: ' + e.message);
+            console.error('Ошибка удаления упражнений:', e);
+          }
+        };
+
+        renderExercises();
+        console.log('Физо инициализировано');
+      } catch (e) {
+        showError('fitness', 'Ошибка инициализации: ' + e.message);
+        console.error('Ошибка инициализации Физо:', e);
+      }
+    }
+
     // Доходы и расходы
     function initFinance() {
       try {
-        console.log('Инициализация модуля Доходы и расходы');
+        console.log('Инициализация Финансов');
         const incomeAmount = document.getElementById('income-amount');
         const incomeDescription = document.getElementById('income-description');
         const expenseAmount = document.getElementById('expense-amount');
@@ -298,7 +647,8 @@
 
             recentTransactions.forEach((transaction, index) => {
               const li = document.createElement('li');
-              li.innerHTML = `${transaction.amount} - ${transaction.description} <button onclick="deleteTransaction(${index})">❌</button>`;
+              li.innerHTML = `${transaction.amount} - ${transaction.description} (${new Date(transaction.date).toLocaleDateString()})
+                <button onclick="deleteTransaction(${index})">❌</button>`;
               if (transaction.type === 'income') {
                 incomeList.appendChild(li);
               } else {
@@ -310,8 +660,8 @@
             const expense = recentTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
             const total = income + expense;
             const percentage = total ? (income / total * 100).toFixed(2) : 0;
-            percentageText.textContent = `Доходы: ${income} | Расходы: ${expense} | ${percentage}%`;
-            percentageText.style.color = percentage > 50 ? 'green' : percentage == 50 ? 'yellow' : 'red';
+            percentageText.textContent = `Доходы: ${income} | Расходы: ${expense} | Эффективность: ${percentage}%`;
+            percentageText.style.color = percentage > 50 ? '#00ff00' : percentage == 50 ? '#ffff00' : '#ff4444';
 
             updateFinanceChart();
             window.renderAnalytics();
@@ -323,8 +673,7 @@
           }
         };
 
-
-const updateFinanceChart = () => {
+        const updateFinanceChart = () => {
           try {
             const dates = [...new Set(transactions.map(t => new Date(t.date).toLocaleDateString()))];
             const incomeData = dates.map(date => {
@@ -344,8 +693,8 @@ const updateFinanceChart = () => {
               data: {
                 labels: dates,
                 datasets: [
-                  { label: 'Доходы', data: incomeData, borderColor: 'green', fill: false },
-                  { label: 'Расходы', data: expenseData, borderColor: 'red', fill: false }
+                  { label: 'Доходы', data: incomeData, borderColor: '#00ff00', fill: false },
+                  { label: 'Расходы', data: expenseData, borderColor: '#ff4444', fill: false }
                 ]
               },
               options: { scales: { y: { beginAtZero: true } } }
@@ -353,7 +702,7 @@ const updateFinanceChart = () => {
             console.log('График финансов обновлён');
           } catch (e) {
             showError('finance', 'Не удалось обновить график: ' + e.message);
-            console.error('Ошибка обновления графика:', e);
+            console.error('Ошибка обновления графика финансов:', e);
           }
         };
 
@@ -372,7 +721,8 @@ const updateFinanceChart = () => {
                 expenseDescription.value = '';
               }
               renderTransactions();
-              console.log(`Добавлена транзакция: ${type}, ${amount}`);
+              logActivity(`Добавлена транзакция: ${type}, ${amount}`);
+              showError('finance', '');
             } else {
               showError('finance', 'Введите сумму (>0) и описание');
             }
@@ -388,7 +738,8 @@ const updateFinanceChart = () => {
             transactions.splice(index, 1);
             localStorage.setItem('transactions', JSON.stringify(transactions));
             renderTransactions();
-            console.log(`Удалена транзакция: ${transaction.type}, ${transaction.amount}`);
+            logActivity(`Удалена транзакция: ${transaction.type}, ${transaction.amount}`);
+            showError('finance', '');
           } catch (e) {
             showError('finance', 'Не удалось удалить транзакцию: ' + e.message);
             console.error('Ошибка удаления транзакции:', e);
@@ -396,17 +747,105 @@ const updateFinanceChart = () => {
         };
 
         renderTransactions();
-        console.log('Доходы и расходы инициализированы');
+        console.log('Финансы инициализированы');
       } catch (e) {
         showError('finance', 'Ошибка инициализации: ' + e.message);
         console.error('Ошибка инициализации Финансов:', e);
       }
     }
 
+    // Архетипы
+    function initArchetype() {
+      try {
+        console.log('Инициализация Архетипов');
+        const archetypeResult = document.getElementById('archetype-result');
+        let archetype = localStorage.getItem('archetype') || '';
+        if (archetype) {
+          archetypeResult.innerHTML = `Ваш архетип: ${archetype}<br>${getArchetypeRecommendations(archetype)}`;
+        }
+        console.log('Архетипы инициализированы');
+      } catch (e) {
+        showError('archetype', 'Ошибка инициализации: ' + e.message);
+        console.error('Ошибка инициализации Архетипов:', e);
+      }
+    }
+
+    function openArchetypeModal() {
+      try {
+        openModal('archetype-modal-template', 'archetype-modal');
+        const questionsDiv = document.getElementById('questions');
+        const questions = [
+          { text: 'Как вы принимаете решения?', options: ['Логика', 'Эмоции', 'Интуиция', 'Анализ'] },
+          { text: 'Как вы общаетесь с людьми?', options: ['Прямо', 'Осторожно', 'Манипулятивно', 'Открыто'] },
+          { text: 'Ваша цель в конфликте?', options: ['Победа', 'Компромисс', 'Избежание', 'Контроль'] }
+        ];
+        questionsDiv.innerHTML = questions.map((q, i) => `
+          <div>
+            <p>${q.text}</p>
+            ${q.options.map(opt => `<button onclick="selectAnswer(${i}, '${opt}')">${opt}</button>`).join('')}
+          </div>
+        `).join('');
+        showError('archetype-modal', '');
+        console.log('Тест архетипов открыт');
+      } catch (e) {
+        showError('archetype-modal', 'Не удалось открыть тест: ' + e.message);
+        console.error('Ошибка открытия теста:', e);
+      }
+    }
+
+
+window.selectAnswer = (questionIndex, answer) => {
+      try {
+        let answers = JSON.parse(localStorage.getItem('archetypeAnswers') || '{}');
+        answers[questionIndex] = answer;
+        localStorage.setItem('archetypeAnswers', JSON.stringify(answers));
+        console.log('Ответ сохранён:', { questionIndex, answer });
+      } catch (e) {
+        showError('archetype-modal', 'Не удалось сохранить ответ: ' + e.message);
+        console.error('Ошибка сохранения ответа:', e);
+      }
+    };
+
+    window.submitArchetype = () => {
+      try {
+        const answers = JSON.parse(localStorage.getItem('archetypeAnswers') || '{}');
+        if (Object.keys(answers).length < 3) {
+          showError('archetype-modal', 'Ответьте на все вопросы');
+          return;
+        }
+        const archetype = determineArchetype(answers);
+        localStorage.setItem('archetype', archetype);
+        document.getElementById('archetype-result').innerHTML = `Ваш архетип: ${archetype}<br>${getArchetypeRecommendations(archetype)}`;
+        closeModal('archetype-modal');
+        logActivity(`Определён архетип: ${archetype}`);
+        showError('archetype', '');
+      } catch (e) {
+        showError('archetype-modal', 'Не удалось определить архетип: ' + e.message);
+        console.error('Ошибка определения архетипа:', e);
+      }
+    };
+
+    function determineArchetype(answers) {
+      const scores = { Strategist: 0, Manipulator: 0, Leader: 0 };
+      if (answers[0] === 'Логика' || answers[0] === 'Анализ') scores.Strategist += 1;
+      if (answers[1] === 'Манипулятивно') scores.Manipulator += 1;
+      if (answers[2] === 'Победа' || answers[2] === 'Контроль') scores.Leader += 1;
+      return Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+    }
+
+    function getArchetypeRecommendations(archetype) {
+      const recommendations = {
+        Strategist: 'Создавай миф о себе, планируй на три шага вперёд (Макиавелли).',
+        Manipulator: 'Управляй эмоциями других, создавай иллюзию выбора (Ницше).',
+        Leader: 'Будь осью, вокруг которой вращаются, задавай правила (Сунь-цзы).'
+      };
+      return recommendations[archetype] || 'Действуй с холодным расчётом.';
+    }
+
     // Карта стратегии
     function initStrategy() {
       try {
-        console.log('Инициализация модуля Карта стратегии');
+        console.log('Инициализация Карты стратегии');
         const strategyList = document.getElementById('strategy-list');
         let strategies = JSON.parse(localStorage.getItem('strategies') || '[]');
 
@@ -435,8 +874,16 @@ const updateFinanceChart = () => {
             strategies.forEach((strategy, index) => {
               const div = document.createElement('div');
               div.className = 'strategy-node';
+              const scenario = simulateScenario(strategy);
               div.innerHTML = `
-                <strong>Цель: ${strategy.goal}</strong> (Люди: ${strategy.people || 'нет'})<br>
+                <strong>Цель: ${strategy.goal}</strong> (Статус: ${strategy.status}, Люди: ${strategy.people || 'нет'})<br>
+                Ресурсы: ${strategy.resources || 'нет'}<br>
+                <div class="strategy-branch">
+                  <div class="strategy-node">Рычаги: ${strategy.levers || 'нет'}</div>
+                  <div class="strategy-node">Препятствия: ${strategy.obstacles || 'нет'}</div>
+                  <div class="strategy-node">Механизмы: ${strategy.mechanisms || 'нет'}</div>
+                </div>
+                Прогноз: ${scenario}<br>
                 <button onclick="deleteStrategy(${index})">❌</button>
               `;
               strategyList.appendChild(div);
@@ -450,18 +897,50 @@ const updateFinanceChart = () => {
           }
         };
 
+        function simulateScenario(strategy) {
+          try {
+            const people = JSON.parse(localStorage.getItem('people') || '[]');
+            const person = people.find(p => p.name === strategy.people);
+            let score = 0;
+            if (person) {
+              score += person.status === 'loyal' ? 20 : person.status === 'neutral' ? 10 : -10;
+              score += person.karma / 2;
+              if (person.tags.includes('💰 Ресурс')) score += 15;
+              if (person.tags.includes('🪨 Балласт')) score -= 15;
+            }
+            if (strategy.resources) score += 10;
+            if (strategy.levers) score += 10;
+            if (strategy.obstacles) score -= 5;
+            if (strategy.mechanisms) score += 10;
+            return score > 30 ? 'Высокий шанс успеха' : score > 0 ? 'Умеренный шанс' : 'Низкий шанс, пересмотрите';
+          } catch (e) {
+            console.error('Ошибка симуляции сценария:', e);
+            return 'Ошибка прогноза';
+          }
+        }
+
         window.addStrategy = () => {
           try {
             const goal = document.getElementById('strategy-goal').value.trim();
             const people = document.getElementById('strategy-people').value;
+            const resources = document.getElementById('strategy-resources').value.trim();
+            const levers = document.getElementById('strategy-levers').value.trim();
+            const obstacles = document.getElementById('strategy-obstacles').value.trim();
+            const mechanisms = document.getElementById('strategy-mechanisms').value.trim();
+            const status = document.getElementById('strategy-status').value;
             if (goal) {
-              strategies.push({ goal, people });
+              strategies.push({ goal, people, resources, levers, obstacles, mechanisms, status });
               localStorage.setItem('strategies', JSON.stringify(strategies));
               document.getElementById('strategy-goal').value = '';
               document.getElementById('strategy-people').value = '';
+              document.getElementById('strategy-resources').value = '';
+              document.getElementById('strategy-levers').value = '';
+              document.getElementById('strategy-obstacles').value = '';
+              document.getElementById('strategy-mechanisms').value = '';
               renderStrategies();
+              logActivity(`Добавлена стратегия: ${goal}`);
               closeModal('strategy-modal');
-              console.log('Добавлена стратегия:', goal);
+              showError('strategy', '');
             } else {
               showError('strategy-modal', 'Введите цель стратегии');
             }
@@ -477,7 +956,8 @@ const updateFinanceChart = () => {
             strategies.splice(index, 1);
             localStorage.setItem('strategies', JSON.stringify(strategies));
             renderStrategies();
-            console.log('Удалена стратегия:', goal);
+            logActivity(`Удалена стратегия: ${goal}`);
+            showError('strategy', '');
           } catch (e) {
             showError('strategy', 'Не удалось удалить стратегию: ' + e.message);
             console.error('Ошибка удаления стратегии:', e);
@@ -504,52 +984,168 @@ const updateFinanceChart = () => {
       }
     }
 
-    // Инициализация
-    document.addEventListener('DOMContentLoaded', () => {
-      console.log('Страница загружена, начинаем инициализацию');
-      initEnvironment();
-      initFinance();
-      initStrategy();
-      console.log('Все модули инициализированы');
-    });
-  </script>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Продуктивность</title>
-  <link rel="manifest" href="/manifest.json">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-  <!-- Остальной код стилей без изменений -->
-</head>
-<body>
-  <div class="module">
-    <button onclick="initEruda()">Открыть консоль</button>
-  </div>
-  <!-- Остальные модули без изменений -->
-  <script>
-    window.initEruda = () => {
+    // Теневая аналитика
+    window.renderAnalytics = () => {
       try {
-        if (typeof eruda !== 'undefined') {
-          eruda.init();
-          eruda.show();
-          console.log('Eruda инициализирована');
-        } else {
-          console.error('Eruda не загружена');
-        }
+        console.log('Обновление аналитики');
+        const analyticsResults = document.getElementById('analytics-results');
+        if (!analyticsResults) return;
+        const people = JSON.parse(localStorage.getItem('people') || '[]');
+        const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+        const plans = JSON.parse(localStorage.getItem('plans') || '[]');
+        const strategies = JSON.parse(localStorage.getItem('strategies') || '[]');
+        const exercises = JSON.parse(localStorage.getItem('exercises') || '[]');
+        let results = '<h3>Теневая аналитика</h3><ul>';
+
+        // Окружение
+        const negativeKarma = people.filter(p => p.karma < 0);
+        results += negativeKarma.length > 0
+          ? `<li>Люди с отрицательной кармой: ${negativeKarma.map(p => `${p.name} (${p.karma})`).join(', ')}. Рекомендация: Исключите слабые альянсы (Сунь-цзы).</li>`
+          : '<li>Нет людей с отрицательной кармой.</li>';
+
+        people.forEach(person => {
+          person.tags.forEach(tag => {
+            if (codeRecommendations[tag]) {
+              results += `<li>${person.name} (${tag}): ${codeRecommendations[tag]}</li>`;
+            }
+          });
+        });
+
+        // Финансы
+        const last30Days = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        const recentTransactions = transactions.filter(t => new Date(t.date) >= last30Days);
+        const income = recentTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+        const expense = recentTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+        const total = income + expense;
+        const percentage = total ? (income / total * 100).toFixed(2) : 0;
+        results += `<li>Финансовая эффективность: ${percentage}%. ${
+          percentage > 50 ? 'Хорошо, продолжайте контролировать ресурсы (Макиавелли).' : 'Требует внимания, сократите ненужные расходы (Сунь-цзы).'
+        }</li>`;
+
+        // План дня
+        const highPriority = plans.filter(p => p.priority === 'high');
+        results += highPriority.length > 0
+          ? `<li>Приоритетные задачи: ${highPriority.map(p => p.text).join(', ')}. Сфокусируйтесь на ключевых целях (Ницше).</li>`
+          : '<li>Нет приоритетных задач. Добавьте цели для дисциплины.</li>';
+
+        // Физо
+        const recentExercises = exercises.filter(e => new Date(e.date) >= last30Days);
+        const types = [...new Set(recentExercises.map(e => e.type))];
+        results += types.length > 0
+          ? `<li>Физическая активность: ${types.join(', ')}. Поддерживайте дисциплину (Ницше: тело — основа силы).</li>`
+          : '<li>Нет активности. Начните тренировки для энергии.</li>';
+
+        // Стратегии
+        const activeStrategies = strategies.filter(s => s.status === 'in-progress');
+        results += activeStrategies.length > 0
+          ? `<li>Активные стратегии: ${activeStrategies.map(s => s.goal).join(', ')}. Создавайте рычаги влияния (Макиавелли).</li>`
+          : '<li>Нет активных стратегий. Планируйте на три шага вперёд (Сунь-цзы).</li>';
+
+        results += '</ul>';
+        analyticsResults.innerHTML = results;
+        logActivity('Обновлена аналитика');
+        showError('analytics', '');
+        console.log('Аналитика обновлена');
       } catch (e) {
-        console.error('Ошибка инициализации Eruda:', e);
+        showError('analytics', 'Не удалось обновить аналитику: ' + e.message);
+        console.error('Ошибка аналитики:', e);
       }
     };
-    // Остальной JavaScript без изменений
-  </script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/service-worker.js')
-    .then(() => console.log('Service Worker зарегистрирован'))
-    .catch(err => {
-      console.error('Ошибка регистрации Service Worker:', err);
-      showError('analytics', 'Ошибка регистрации Service Worker: ' + err.message);
+
+
+// Напоминания
+    function initReminders() {
+      try {
+        console.log('Инициализация Напоминаний');
+        const reminderText = document.getElementById('reminder-text');
+        const reminderList = document.getElementById('reminder-list');
+        let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+
+        const renderReminders = () => {
+          try {
+            reminderList.innerHTML = '';
+            tasks.forEach((task, index) => {
+              const li = document.createElement('li');
+              li.innerHTML = `
+                ${task.text} (${new Date(task.created).toLocaleDateString()})
+                <button onclick="deleteReminder(${index})">❌</button>
+              `;
+              reminderList.appendChild(li);
+            });
+            window.renderAnalytics();
+            showError('reminders', '');
+            console.log('Напоминания отображены:', tasks);
+          } catch (e) {
+            showError('reminders', 'Не удалось отобразить напоминания: ' + e.message);
+            console.error('Ошибка рендеринга напоминаний:', e);
+          }
+        };
+
+        window.addReminder = () => {
+          try {
+            const text = reminderText.value.trim();
+            if (text) {
+              tasks.push({ text, created: new Date().toISOString(), completed: false });
+              localStorage.setItem('tasks', JSON.stringify(tasks));
+              reminderText.value = '';
+              renderReminders();
+              logActivity(`Добавлено напоминание: ${text}`);
+              showError('reminders', '');
+            } else {
+              showError('reminders', 'Введите текст напоминания');
+            }
+          } catch (e) {
+            showError('reminders', 'Не удалось добавить напоминание: ' + e.message);
+            console.error('Ошибка добавления напоминания:', e);
+          }
+        };
+
+        window.deleteReminder = (index) => {
+          try {
+            const text = tasks[index].text;
+            tasks.splice(index, 1);
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            renderReminders();
+            logActivity(`Удалено напоминание: ${text}`);
+            showError('reminders', '');
+          } catch (e) {
+            showError('reminders', 'Не удалось удалить напоминание: ' + e.message);
+            console.error('Ошибка удаления напоминания:', e);
+          }
+        };
+
+        renderReminders();
+        console.log('Напоминания инициализированы');
+      } catch (e) {
+        showError('reminders', 'Ошибка инициализации: ' + e.message);
+        console.error('Ошибка инициализации Напоминаний:', e);
+      }
+    }
+
+    // Инициализация и Service Worker
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('Страница загружена, начинаем инициализацию');
+      initPlan();
+      initEnvironment();
+      initFitness();
+      initFinance();
+      initArchetype();
+      initStrategy();
+      initReminders();
+      console.log('Все модули инициализированы');
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(() => {
+            console.log('Service Worker зарегистрирован');
+            logActivity('Service Worker зарегистрирован');
+          })
+          .catch(err => {
+            console.error('Ошибка регистрации Service Worker:', err);
+            showError('analytics', 'Ошибка Service Worker: ' + err.message);
+          });
+      }
     });
-}
+  </script>
 </body>
 </html>
