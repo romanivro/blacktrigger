@@ -1,9 +1,9 @@
 {
-  "name": "Продуктивность",
-  "short_name": "Продуктивность",
+  "name": "BlackTrigger HQ",
+  "short_name": "BlackTrigger",
   "start_url": "/index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#1a1a1a",
   "theme_color": "#007bff",
   "icons": []
 }
