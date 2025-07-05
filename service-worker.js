@@ -1,11 +1,13 @@
-const CACHE_NAME = 'blacktrigger-hq-v1';
+// service-worker.js
+const CACHE_NAME = 'blacktrigger-hq-v2';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/styles.css', // Если у тебя есть отдельный CSS файл
+  '/styles.css',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js',
   'https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js',
-  'https://cdn.jsdelivr.net/npm/eruda'
+  'https://cdn.jsdelivr.net/npm/eruda',
+  '/icon.png'
 ];
 
 self.addEventListener('install', event => {
@@ -36,4 +38,10 @@ self.addEventListener('activate', event => {
       );
     })
   );
+});
+
+self.addEventListener('message', event => {
+  if (event.data === 'skipWaiting') {
+    self.skipWaiting();
+  }
 });
