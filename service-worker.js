@@ -1,9 +1,10 @@
-const CACHE_NAME = 'blacktrigger-v1';
+const CACHE_NAME = 'blacktrigger-v2';
 const urlsToCache = [
   '/',
   '/index.html',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js',
-  'https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js'
+  'https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js',
+  'https://cdn.jsdelivr.net/npm/eruda'
 ];
 
 self.addEventListener('install', event => {
