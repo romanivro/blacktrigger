@@ -1,11 +1,10 @@
-// manifest.json
 {
   "name": "BlackTrigger HQ",
-  "short_name": "BlackTrigger",
+  "short_name": "BTHQ",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1a1a1a",
-  "theme_color": "#ff4444",
+  "theme_color": "#1a1a1a",
   "icons": [
     {
       "src": "/icon.png",
@@ -17,6 +16,5 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ],
-  "scope": "/"
+  ]
 }
