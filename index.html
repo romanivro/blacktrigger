@@ -355,6 +355,274 @@
       </div>
     </template>
   </div>
+// Уведомления
+function scheduleNotifications() {
+  try {
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'granted') {
+      Notification.requestPermission();
+      return;
+    }
+    const plans = JSON.parse(localStorage.getItem('plans') || '[]');
+    const habits = JSON.parse(localStorage.getItem('habits') || '[]');
+    const now = new Date();
+    plans.forEach(plan => {
+      if (!plan.completed && new Date(plan.created).toDateString() === now.toDateString()) {
+        new Notification('Напоминание', { body: `Задача "${plan.text}" не выполнена!` });
+      }
+    });
+    habits.forEach(habit => {
+      if (!habit.todayCompleted && habit.frequency === 'daily') {
+        new Notification('Напоминание', { body: `Не забыть про привычку: ${habit.text}` });
+      }
+    });
+  } catch (e) {
+    showError('analytics', 'Ошибка уведомлений: ' + e.message);
+  }
+}
+
+// Проверка бездействия
+function checkInactivity() {
+  try {
+    const lastActivity = localStorage.getItem('lastActivity') || new Date().toISOString();
+    const daysSinceLast = (new Date() - new Date(lastActivity)) / (1000 * 60 * 60 * 24);
+    if (daysSinceLast > 3) {
+      const notification = document.getElementById('critical-notification');
+      notification.style.display = 'block';
+      notification.textContent = 'Бездействие более 3 дней! Вернитесь к работе!';
+      if (Notification.permission === 'granted') {
+        new Notification('Критическое уведомление', { body: 'Бездействие более 3 дней!' });
+      }
+    }
+    localStorage.setItem('lastActivity', new Date().toISOString());
+  } catch (e) {
+    showError('analytics', 'Ошибка проверки бездействия: ' + e.message);
+  }
+}
+
+// Правило дня
+function initRuleOfDay() {
+  try {
+    const ruleText = document.getElementById('rule-text');
+    const customRuleInput = document.getElementById('custom-rule');
+    let currentRule = JSON.parse(localStorage.getItem('currentRule') || '{}');
+    let customRules = JSON.parse(localStorage.getItem('customRules') || '[]');
+    const defaultRules = [
+      'Победа — это система, а не случай.',
+      'Ресурсы важнее чувств.',
+      'Держи врагов ближе, чем друзей.',
+      'Сила в дисциплине.',
+      'Контроль над собой — контроль над всем.'
+    ];
+
+    const updateRule = () => {
+      const today = new Date().toDateString();
+      if (currentRule.date !== today) {
+        const rule = customRules.length > 0 && Math.random() > 0.5
+          ? customRules[Math.floor(Math.random() * customRules.length)]
+          : defaultRules[Math.floor(Math.random() * defaultRules.length)];
+        currentRule = { text: rule, adhered: 0, violated: 0, date: today };
+        localStorage.setItem('currentRule', JSON.stringify(currentRule));
+      }
+      ruleText.textContent = currentRule.text;
+      renderAnalytics();
+      showError('rule', '');
+    };
+
+    window.addCustomRule = () => {
+      try {
+        const rule = customRuleInput.value.trim();
+        if (rule) {
+          customRules.push(rule);
+          localStorage.setItem('customRules', JSON.stringify.customRules));
+          customRuleInput.value = '';
+          updateRule();
+          logActivity(`Добавлено правило: ${rule}`);
+          showError('rule', '');
+        } else {
+          showError('rule', 'Введите правило');
+        }
+      } catch (e) {
+        showError('rule', 'Не удалось добавить правило: ' + e.message);
+      }
+    };
+
+    window.adhereRule = () => {
+      try {
+        currentRule.adhered = (currentRule.adhered || 0) + 1;
+        localStorage.setItem('currentRule', JSON.stringify(currentRule));
+        renderAnalytics();
+        logActivity(`Правило "${currentRule.text}" соблюдено`);
+        showError('rule', '');
+      } catch (e) {
+        showError('rule', 'Не удалось отметить соблюдение: ' + e.message);
+      }
+    };
+
+    window.violateRule = () => {
+      try {
+        currentRule.violated = (currentRule.violated || 0) + 1;
+        localStorage.setItem('currentRule', JSON.stringify(currentRule));
+        renderAnalytics();
+        logActivity(`Правило "${currentRule.text}" нарушено`);
+        showError('rule', '');
+      } catch (e) {
+        showError('rule', 'Не удалось отметить нарушение: ' + e.message);
+      }
+    };
+
+    updateRule();
+  } catch (e) {
+    showError('rule', 'Ошибка инициализации: ' + e.message);
+  }
+}
+
+// План дня
+function initPlan() {
+  try {
+    const planText = document.getElementById('plan-text');
+    const planPriority = document.getElementById('plan-priority');
+    const planList = document.getElementById('plan-list');
+    let plans = JSON.parse(localStorage.getItem('plans') || '[]');
+
+    const renderPlans = () => {
+      try {
+        planList.innerHTML = '';
+        plans.forEach((plan, index) => {
+          const li = document.createElement('li');
+          li.innerHTML = `
+            ${plan.text} (Приоритет: ${plan.priority}, ${new Date(plan.created).toLocaleDateString()})
+            <input type="checkbox" ${plan.completed ? 'checked' : ''} onchange="togglePlan(${index})">
+            <button class="button-medium" onclick="deletePlan(${index})">❌</button>
+          `;
+          planList.appendChild(li);
+        });
+        renderAnalytics();
+        scheduleNotifications();
+        showError('plan', '');
+      } catch (e) {
+        showError('plan', 'Не удалось отобразить задачи: ' + e.message);
+      }
+    };
+
+    window.addPlan = () => {
+      try {
+        const text = planText.value.trim();
+        const priority = planPriority.value;
+        if (text) {
+          plans.push({ text, priority, created: new Date().toISOString(), completed: false });
+          localStorage.setItem('plans', JSON.stringify(plans));
+          planText.value = '';
+          planPriority.value = 'low';
+          renderPlans();
+          logActivity(`Добавлена задача: ${text}`);
+          showError('plan', '');
+        } else {
+          showError('plan', 'Введите задачу');
+        }
+      } catch (e) {
+        showError('plan', 'Не удалось добавить задачу: ' + e.message);
+      }
+    };
+
+    window.togglePlan = (index) => {
+      try {
+        plans[index].completed = !plans[index].completed;
+        localStorage.setItem('plans', JSON.stringify(plans));
+        renderPlans();
+        logActivity(`Задача ${plans[index].text}: ${plans[index].completed ? 'Выполнена' : 'Отменена'}`);
+      } catch (e) {
+        showError('plan', 'Не удалось изменить статус задачи: ' + e.message);
+      }
+    };
+
+    window.deletePlan = (index) => {
+      try {
+        const text = plans[index].text;
+        plans.splice(index, 1);
+        localStorage.setItem('plans', JSON.stringify(plans));
+        renderPlans();
+        logActivity(`Удалена задача: ${text}`);
+        showError('plan', '');
+      } catch (e) {
+        showError('plan', 'Не удалось удалить задачу: ' + e.message);
+      }
+    };
+
+    renderPlans();
+  } catch (e) {
+    showError('plan', 'Ошибка инициализации: ' + e.message);
+  }
+}
+
+// Аналитика (заглушка, будет дополнена позже)
+function renderAnalytics() {
+  try {
+    const analyticsResults = document.getElementById('analytics-results');
+    const plans = JSON.parse(localStorage.getItem('plans') || '[]');
+    const completedPlans = plans.filter(p => p.completed).length;
+    const totalPlans = plans.length;
+    const rule = JSON.parse(localStorage.getItem('currentRule') || '{}');
+    analyticsResults.innerHTML = `
+      <p>Задачи: ${completedPlans}/${totalPlans} (${totalPlans ? Math.round((completedPlans / totalPlans) * 100) : 0}% выполнено)</p>
+      <p>Правило дня: Соблюдено ${rule.adhered || 0}, Нарушено ${rule.violated || 0}</p>
+    `;
+    showError('analytics', '');
+  } catch (e) {
+    showError('analytics', 'Ошибка аналитики: ' + e.message);
+  }
+}
+
+// Инициализация Eruda
+function initEruda() {
+  try {
+    eruda.init();
+    logActivity('Консоль Eruda открыта');
+  } catch (e) {
+    showError('settings', 'Ошибка открытия консоли: ' + e.message);
+  }
+}
+
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    const mode = localStorage.getItem('mode') || 'Absolute';
+    switchMode(mode);
+    document.getElementById('mode-select').value = mode;
+    const customSettings = JSON.parse(localStorage.getItem('customSettings') || '{}');
+    if (customSettings.backgroundImage) {
+      document.querySelector('.container').style.backgroundImage = `url(${customSettings.backgroundImage})`;
+    }
+    if (customSettings.moduleSize) {
+      document.querySelectorAll('.module').forEach(module => {
+        module.classList.add(`module-${customSettings.moduleSize}`);
+      });
+      document.getElementById('module-size').value = customSettings.moduleSize;
+    }
+    if (customSettings.buttonSize) {
+      document.querySelectorAll('button').forEach(button => {
+        button.classList.add(`button-${customSettings.buttonSize}`);
+      });
+      document.getElementById('button-size').value = customSettings.buttonSize;
+    }
+    initRuleOfDay();
+    initPlan();
+    checkInactivity();
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+        .then(reg => {
+          console.log('Service Worker зарегистрирован:', reg);
+          logActivity('Service Worker зарегистрирован');
+        })
+        .catch(err => {
+          console.error('Ошибка регистрации Service Worker:', err);
+          showError('settings', 'Ошибка Service Worker: ' + err.message);
+        });
+    }
+  } catch (e) {
+    showError('settings', 'Ошибка инициализации приложения: ' + e.message);
+  }
+});
 
   <script src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
