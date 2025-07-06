@@ -1,11 +1,5 @@
-const CACHE_NAME = 'blacktrigger-hq-v3';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/styles.css',
-  '/icon.png',
-  '/icon-512.png'
-];
+const CACHE_NAME = 'blacktrigger-hq-v4';
+const urlsToCache = ['/', '/index.html'];
 
 self.addEventListener('install', event => {
   event.waitUntil(
