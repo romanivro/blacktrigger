@@ -8,36 +8,23 @@
   <meta name="theme-color" content="#1a1a1a">
   <style>
     body { margin: 0; font-family: Arial, sans-serif; background: #1a1a1a; color: #e0e0e0; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; background-size: cover; }
     .nav-bar {
-      display: flex;
-      justify-content: space-around;
-      flex-wrap: wrap;
-      background: #222;
-      padding: 10px;
-      margin-bottom: 20px;
-      border-radius: 5px;
+      display: flex; flex-wrap: wrap; justify-content: space-around; background: #222; padding: 10px;
+      margin-bottom: 20px; border-radius: 5px;
     }
     .module {
-      border: 1px solid #444;
-      margin: 10px 0;
-      border-radius: 5px;
+      border: 1px solid #444; margin: 10px 0; border-radius: 5px;
     }
     .module-header {
-      padding: 10px;
-      background: #333;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      padding: 10px; background: #333; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
     }
     .module-content { padding: 10px; display: none; }
-    .module.collapsed .module-content { display: none; }
-    .module:not(.collapsed) .module-content { display: block; }
     .module.always-open .module-content { display: block; }
+    .module:not(.collapsed) .module-content { display: block; }
     .error { color: #ff5555; margin: 10px 0; }
     .strategy-tree { display: flex; flex-direction: column; align-items: stretch; }
-    .strategy-node { padding: 10px; border: 1px solid #444; margin: 5px; border-radius: 5px; width: 100%; }
+    .strategy-node { padding: 10px; border: 1px solid #444; margin: 5px; border-radius: 5px; }
     .strategy-branch { margin-left: 20px; }
     .profile-card { padding: 10px; border: 1px solid #444; margin: 5px; cursor: pointer; }
     .profile-details { display: none; }
@@ -57,11 +44,13 @@
     .module-large { max-width: 500px; }
     button { background: #007bff; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
     button:hover { background: #0056b3; }
-    select, input[type="text"], input[type="number"], input[type="file"] { background: #333; color: #e0e0e0; border: 1px solid #444; padding: 5px; border-radius: 5px; }
+    select, input[type="text"], input[type="number"], input[type="file"], textarea {
+      background: #333; color: #e0e0e0; border: 1px solid #444; padding: 5px; border-radius: 5px;
+    }
     /* Режимы */
-    .absolute { background: #1a1a1a; --accent: #ff5555; }
-    .recon { background: #1a1a1a; --accent: #55aaff; }
-    .hunter { background: #1a1a1a; --accent: #55ff55; }
+    .absolute { background: #1a1a1a; --accent: #ff5555; --accent-dark: #cc0000; }
+    .recon { background: #1a1a1a; --accent: #55aaff; --accent-dark: #336699; }
+    .hunter { background: #1a1a1a; --accent: #55ff55; --accent-dark: #33cc33; }
     button.accent { background: var(--accent); }
     button.accent:hover { background: var(--accent-dark); }
   </style>
@@ -101,7 +90,7 @@
       </div>
     </div>
 
-    <!-- План дня -->
+  <!-- План дня -->
     <div class="module always-open module-medium" id="plan-module">
       <div class="module-header">
         <h2>План дня</h2>
@@ -243,7 +232,7 @@
       </div>
     </div>
 
-    <!-- Теневая аналитика -->
+ <!-- Теневая аналитика -->
     <div class="module always-open module-medium" id="analytics-module">
       <div class="module-header">
         <h2>Теневая аналитика</h2>
@@ -460,6 +449,81 @@
     function switchMode(mode) {
       document.body.className = mode.toLowerCase();
       localStorage.setItem('mode', mode);
-      const accentDark = mode === 'Absolute' ? '#cc0000' : mode === 'Recon' ? '#336699' : '#33cc33';
-      document.documentElement.style.setProperty('--accent-dark', accentDark);
-      lo
+      logActivity(`Режим изменён на ${mode}`);
+    }
+
+    function applyBackground() {
+      try {
+        const fileInput = document.getElementById('background-image');
+        if (fileInput.files.length === 0) {
+          showError('settings', 'Выберите изображение');
+          return;
+        }
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const customSettings = JSON.parse(localStorage.getItem('customSettings') || '{}');
+          customSettings.backgroundImage = e.target.result;
+          localStorage.setItem('customSettings', JSON.stringify(customSettings));
+          document.querySelector('.container').style.backgroundImage = `url(${customSettings.backgroundImage})`;
+          logActivity('Фоновое изображение изменено');
+        };
+        reader.readAsDataURL(file);
+      } catch (e) {
+        showError('settings', 'Ошибка загрузки фона: ' + e.message);
+      }
+    }
+
+    function applyModuleSize() {
+      try {
+        const size = document.getElementById('module-size').value;
+        const customSettings = JSON.parse(localStorage.getItem('customSettings') || '{}');
+        customSettings.moduleSize = size;
+        localStorage.setItem('customSettings', JSON.stringify(customSettings));
+        document.querySelectorAll('.module').forEach(module => {
+          module.classList.remove('module-small', 'module-medium', 'module-large');
+          module.classList.add(`module-${size}`);
+        });
+        logActivity(`Размер окон изменён на ${size}`);
+      } catch (e) {
+        showError('settings', 'Ошибка изменения размера окон: ' + e.message);
+      }
+    }
+
+
+function applyButtonSize() {
+      try {
+        const size = document.getElementById('button-size').value;
+        const customSettings = JSON.parse(localStorage.getItem('customSettings') || '{}');
+        customSettings.buttonSize = size;
+        localStorage.setItem('customSettings', JSON.stringify(customSettings));
+        document.querySelectorAll('button').forEach(button => {
+          button.classList.remove('button-small', 'button-medium', 'button-large');
+          button.classList.add(`button-${size}`);
+        });
+        logActivity(`Размер кнопок изменён на ${size}`);
+      } catch (e) {
+        showError('settings', 'Ошибка изменения размера кнопок: ' + e.message);
+      }
+    }
+
+    function resetSettings() {
+      try {
+        localStorage.removeItem('customSettings');
+        document.querySelector('.container').style.backgroundImage = '';
+        document.querySelectorAll('.module').forEach(module => {
+          module.classList.remove('module-small', 'module-medium', 'module-large');
+          module.classList.add('module-medium');
+        });
+        document.querySelectorAll('button').forEach(button => {
+          button.classList.remove('button-small', 'button-medium', 'button-large');
+          button.classList.add('button-medium');
+        });
+        logActivity('Настройки сброшены');
+      } catch (e) {
+        showError('settings', 'Ошибка сброса настроек: ' + e.message);
+      }
+    }
+  </script>
+</body>
+</html>
