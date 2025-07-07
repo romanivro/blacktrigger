@@ -3,6 +3,10 @@ function initPlan() {
     const planText = document.getElementById('plan-text');
     const planPriority = document.getElementById('plan-priority');
     const planList = document.getElementById('plan-list');
+    if (!planText || !planPriority || !planList) {
+      showError('plan', 'Элементы интерфейса не найдены');
+      return;
+    }
     let plans = JSON.parse(localStorage.getItem('plans') || '[]');
 
     const renderPlans = () => {
@@ -17,7 +21,6 @@ function initPlan() {
           `;
           planList.appendChild(li);
         });
-        renderAnalytics();
         scheduleNotifications();
         showError('plan', '');
       } catch (e) {
