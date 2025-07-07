@@ -1,14 +1,18 @@
 function initArchetype() {
   try {
     const archetypeResult = document.getElementById('archetype-result');
+    if (!archetypeResult) {
+      showError('archetype', 'Элемент результата не найден');
+      return;
+    }
     let archetype = JSON.parse(localStorage.getItem('archetype') || '{}');
 
     const questions = [
       { text: 'Вы предпочитаете действовать быстро, даже если это рискованно?', scores: { Predator: 2, Strategist: 1 } },
-      { text: 'Вы часто манипулируете другими для достижения целей?', scores: { Puppeteer: 2, Manipulator: 1 } },
-      { text: 'Вы чувствуете себя комфортно в роли лидера?', scores: { Hero: 2, Strategist: 1 } },
+      { text: 'Вы часто манипулируете другими для достижения целей?', scores: { Puppeteer: 2, Provocateur: 1 } },
+      { text: 'Вы чувствуете себя комфортно в роли лидера?', scores: { Hero: 2, Mediator: 1 } },
       { text: 'Вы склонны к долгосрочному планированию?', scores: { Strategist: 2, Oracle: 1 } },
-      { text: 'Вам легко спровоцировать конфликт для проверки других?', scores: { Provocateur: 2, Manipulator: 1 } },
+      { text: 'Вам легко спровоцировать конфликт для проверки других?', scores: { Provocateur: 2, Puppeteer: 1 } },
       { text: 'Вы цените лояльность превыше всего?', scores: { Hero: 2, Mediator: 1 } },
       { text: 'Вы часто предсказываете поведение других?', scores: { Oracle: 2, Strategist: 1 } },
       { text: 'Вам нравится выполнять задачи чётко и по плану?', scores: { Executor: 2, Strategist: 1 } },
@@ -18,12 +22,7 @@ function initArchetype() {
       { text: 'Вы быстро адаптируетесь к новым условиям?', scores: { Predator: 2, Provocateur: 1 } },
       { text: 'Вы тщательно анализируете риски перед действием?', scores: { Strategist: 2, Oracle: 1 } },
       { text: 'Вам нравится контролировать ситуацию полностью?', scores: { Puppeteer: 2, Strategist: 1 } },
-      { text: 'Вы вдохновляете других своим примером?', scores: { Hero: 2, Mediator: 1 } },
-      { text: 'Вы часто действуете интуитивно?', scores: { Oracle: 2, Predator: 1 } },
-      { text: 'Вы предпочитаете чёткие инструкции?', scores: { Executor: 2, Mediator: 1 } },
-      { text: 'Вы легко находите общий язык с людьми?', scores: { Mediator: 2, Hero: 1 } },
-      { text: 'Вы любите создавать хаос для достижения целей?', scores: { Provocateur: 2, Puppeteer: 1 } },
-      { text: 'Вы стремитесь к максимальной эффективности?', scores: { Strategist: 2, Executor: 1 } }
+      { text: 'Вы вдохновляете других своим примером?', scores: { Hero: 2, Mediator: 1 } }
     ];
 
     const archetypes = {
@@ -66,44 +65,6 @@ function initArchetype() {
             if (currentQuestion < questions.length) {
               renderQuestion();
             } else {
-              const result = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b, Object.keys(scores)[0]);
+              const result = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b, Object.keys(scores)[0] || 'Strategist');
               archetype = { type: result, details: archetypes[result] };
-              localStorage.setItem('archetype', JSON.stringify(archetype));
-              closeModal('archetype-modal');
-              renderResult();
-              logActivity(`Пройден тест архетипа: ${archetypes[result].name}`);
-            }
-          } catch (e) {
-            showError('archetype', 'Ошибка ответа на вопрос: ' + e.message);
-          }
-        };
-
-        renderQuestion();
-      } catch (e) {
-        showError('archetype', 'Ошибка открытия теста: ' + e.message);
-      }
-    };
-
-    const renderResult = () => {
-      try {
-        if (archetype.type) {
-          archetypeResult.innerHTML = `
-            <p>Ваш архетип: ${archetypes[archetype.type].name}</p>
-            <p><strong>Сильные стороны:</strong> ${archetypes[archetype.type].strengths}</p>
-            <p><strong>Слабые стороны:</strong> ${archetypes[archetype.type].weaknesses}</p>
-            <p><strong>Рекомендации:</strong> ${archetypes[archetype.type].tips}</p>
-          `;
-        }
-        showError('archetype', '');
-      } catch (e) {
-        showError('archetype', 'Ошибка отображения результата: ' + e.message);
-      }
-    };
-
-    renderResult();
-  } catch (e) {
-    showError('archetype', 'Ошибка инициализации: ' + e.message);
-  }
-}
-
-document.addEventListener('DOMContentLoaded', initArchetype);
+              localStorage
