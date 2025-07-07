@@ -2,13 +2,13 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>BlackTrigger HQ</title>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#1a1a1a">
   <style>
-    body { margin: 0; font-family: Arial, sans-serif; background: #1a1a1a; color: #e0e0e0; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    body { margin: 0; padding: 0; width: 100%; height: 100vh; background: #1a1a1a; color: #e0e0e0; font-family: Arial, sans-serif; }
+    .container { width: 100%; height: 100%; padding: 10px; box-sizing: border-box; }
     .nav-bar { display: flex; flex-wrap: wrap; justify-content: space-around; background: #222; padding: 10px; margin-bottom: 20px; border-radius: 5px; }
     .module { border: 1px solid #444; margin: 10px 0; border-radius: 5px; }
     .module-header { padding: 10px; background: #333; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
@@ -16,312 +16,182 @@
     .module.always-open .module-content { display: block; }
     .module:not(.collapsed) .module-content { display: block; }
     .error { color: #ff5555; margin: 10px 0; }
-    .rule-actions { display: flex; justify-content: space-between; }
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
-    .modal-content { background: #333; padding: 20px; margin: 10% auto; width: 80%; max-width: 600px; border-radius: 5px; }
-    .modal.show { display: block; }
-    .critical-notification { display: none; color: #ff5555; padding: 10px; border: 1px solid #ff5555; margin: 10px 0; }
-    .button-medium { padding: 18px 26px; font-size: 20px; }
-    .module-medium { max-width: 400px; }
-    button { background: #007bff; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
+    button { background: #007bff; color: #fff; border: none; border-radius: 5px; cursor: pointer; padding: 10px; }
     button:hover { background: #0056b3; }
-    select, input[type="text"], input[type="number"], textarea { background: #333; color: #e0e0e0; border: 1px solid #444; padding: 5px; border-radius: 5px; width: 100%; box-sizing: border-box; }
-    .absolute { background: #1a1a1a; --accent: #ff5555; --accent-dark: #cc0000; }
-    .recon { background: #1a1a1a; --accent: #55aaff; --accent-dark: #336699; }
-    .hunter { background: #1a1a1a; --accent: #55ff55; --accent-dark: #33cc33; }
-    button.accent { background: var(--accent); }
-    button.accent:hover { background: var(--accent-dark); }
-    .tooltip { position: relative; }
-    .tooltip:hover::after {
-      content: attr(data-tooltip); position: absolute; background: #333; color: #e0e0e0; padding: 5px; border-radius: 3px; z-index: 10; top: 100%; left: 0; width: 200px;
-    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="nav-bar">
-      <button class="accent button-medium" onclick="toggleModule('rule-module')">Правило дня</button>
-      <button class="accent button-medium" onclick="toggleModule('plan-module')">План дня</button>
-      <button class="accent button-medium" onclick="toggleModule('environment-module')">Окружение</button>
-      <button class="accent button-medium" onclick="toggleModule('finance-module')">Финансы</button>
-      <button class="accent button-medium" onclick="toggleModule('fitness-module')">Физо</button>
-      <button class="accent button-medium" onclick="toggleModule('strategy-module')">Карта стратегии</button>
-      <button class="accent button-medium" onclick="toggleModule('habits-module')">Привычки</button>
-      <button class="accent button-medium" onclick="toggleModule('notes-module')">Заметки</button>
-      <button class="accent button-medium" onclick="toggleModule('knowledge-module')">База знаний</button>
-      <button class="accent button-medium" onclick="toggleModule('archetype-module')">Архетипы</button>
-      <button class="accent button-medium" onclick="toggleModule('analytics-module')">Аналитика</button>
-      <button class="accent button-medium" onclick="toggleModule('settings-module')">Настройки</button>
-      <button class="accent button-medium" onclick="toggleModule('help-module')">Справка</button>
+      <button onclick="toggleModule('rule-module')">Правило День</button>
+      <button onclick="toggleModule('plan-module')">План День</button>
+      <button onclick="toggleModule('environment-module')">Окружение</button>
+      <button onclick="toggleModule('finance-module')">Финансы</button>
+      <button onclick="toggleModule('habits-module')">Привычки</button>
+      <button onclick="toggleModule('notes-module')">Заметки</button>
+      <button onclick="toggleModule('knowledge-module')">База знаний</button>
+      <button onclick="toggleModule('archetype-module')">Архетипы</button>
+      <button onclick="toggleModule('analytics-module')">Аналитика</button>
+      <button onclick="toggleModule('settings-module')">Настройки</button>
+      <button onclick="toggleModule('help-module')">Справка</button>
+      <button onclick="toggleModule('strategy-module')">Карта стратегии</button>
     </div>
-    <div class="critical-notification" id="critical-notification"></div>
 
-    <!-- Правило дня -->
-    <div class="module always-open module-medium" id="rule-module">
+    <div class="module always-open" id="rule-module">
       <div class="module-header">
-        <h2>📜 Правило дня</h2>
+        <h2>Правило День</h2>
       </div>
       <div class="module-content">
         <div id="rule-text"></div>
-        <div class="rule-actions">
-          <button class="button-medium" onclick="adhereRule()">Придержался</button>
-          <button class="button-medium" onclick="violateRule()">Нарушил</button>
-        </div>
-        <input type="text" id="custom-rule" placeholder="Добавить своё правило" data-tooltip="Введите своё правило или используйте стандартное">
-        <button class="button-medium" onclick="addCustomRule()">Добавить</button>
+        <button onclick="adhereRule()">Придержался</button>
+        <button onclick="violateRule()">Нарушил</button>
+        <input type="text" id="custom-rule" placeholder="Добавить правило">
+        <button onclick="addCustomRule()">Добавить</button>
         <div class="error" id="rule-error"></div>
       </div>
     </div>
 
-    <!-- План дня -->
-    <div class="module always-open module-medium" id="plan-module">
+    <div class="module always-open" id="plan-module">
       <div class="module-header">
-        <h2>📋 План дня</h2>
+        <h2>План День</h2>
       </div>
       <div class="module-content">
-        <input type="text" id="plan-text" placeholder="Введите задачу" data-tooltip="Добавьте задачу на день">
-        <select id="plan-priority">
-          <option value="low">Низкий</option>
-          <option value="medium">Средний</option>
-          <option value="high">Высокий</option>
-        </select>
-        <button class="button-medium" onclick="addPlan()">Добавить</button>
+        <input type="text" id="plan-text" placeholder="Добавить план">
+        <button onclick="addPlan()">Добавить</button>
         <div class="error" id="plan-error"></div>
         <ul id="plan-list"></ul>
       </div>
     </div>
 
-    <!-- Окружение -->
-    <div class="module collapsed module-medium" id="environment-module">
+    <!-- Другие модули упрощены для теста -->
+    <div class="module collapsed" id="environment-module">
       <div class="module-header" onclick="toggleModule('environment-module')">
-        <h2>👥 Окружение</h2>
-        <span>▼</span>
+        <h2>Окружение</h2><span>▼</span>
       </div>
       <div class="module-content">
-        <button class="button-medium" onclick="openPersonModal()">Добавить человека</button>
-        <div class="error" id="environment-error"></div>
+        <button onclick="openPersonModal()">Добавить</button>
         <div id="people-list"></div>
       </div>
     </div>
 
-    <!-- Финансы -->
-    <div class="module collapsed module-medium" id="finance-module">
+    <div class="module collapsed" id="finance-module">
       <div class="module-header" onclick="toggleModule('finance-module')">
-        <h2>💸 Финансы</h2>
-        <span>▼</span>
+        <h2>Финансы</h2><span>▼</span>
       </div>
       <div class="module-content">
-        <input type="number" id="finance-amount" placeholder="Сумма" data-tooltip="Введите сумму дохода или расхода">
-        <select id="finance-type">
-          <option value="income">Доход</option>
-          <option value="expense">Расход</option>
-        </select>
-        <input type="text" id="finance-tag" placeholder="Тег" data-tooltip="Например: зарплата, еда, транспорт">
-        <button class="button-medium" onclick="addTransaction()">Добавить</button>
-        <div class="error" id="finance-error"></div>
+        <button onclick="addTransaction()">Добавить</button>
         <ul id="finance-list"></ul>
       </div>
     </div>
 
-    <!-- Физо -->
-    <div class="module collapsed module-medium" id="fitness-module">
-      <div class="module-header" onclick="toggleModule('fitness-module')">
-        <h2>🏋️‍♂️ Физо</h2>
-        <span>▼</span>
-      </div>
-      <div class="module-content">
-        <input type="text" id="exercise-type" placeholder="Тип упражнения" data-tooltip="Например: бег, турник">
-        <input type="number" id="exercise-result" placeholder="Результат" data-tooltip="Кол-во повторений или время">
-        <button class="button-medium" onclick="addExercise()">Добавить</button>
-        <div class="error" id="fitness-error"></div>
-        <ul id="exercise-list"></ul>
-      </div>
-    </div>
-
-    <!-- Карта стратегии -->
-    <div class="module collapsed module-medium" id="strategy-module">
-      <div class="module-header" onclick="toggleModule('strategy-module')">
-        <h2>🗺️ Карта стратегии</h2>
-        <span>▼</span>
-      </div>
-      <div class="module-content">
-        <button class="button-medium" onclick="openStrategyModal()">Добавить стратегию</button>
-        <div class="error" id="strategy-error"></div>
-        <div id="strategy-list"></div>
-      </div>
-    </div>
-
-    <!-- Привычки -->
-    <div class="module collapsed module-medium" id="habits-module">
+    <div class="module collapsed" id="habits-module">
       <div class="module-header" onclick="toggleModule('habits-module')">
-        <h2>🔄 Привычки</h2>
-        <span>▼</span>
+        <h2>Привычки</h2><span>▼</span>
       </div>
       <div class="module-content">
-        <input type="text" id="habit-text" placeholder="Введите привычку" data-tooltip="Например: читать 10 страниц">
-        <select id="habit-frequency">
-          <option value="daily">Ежедневно</option>
-          <option value="weekly">Еженедельно</option>
-        </select>
-        <button class="button-medium" onclick="addHabit()">Добавить</button>
-        <div class="error" id="habits-error"></div>
+        <button onclick="addHabit()">Добавить</button>
         <ul id="habit-list"></ul>
       </div>
     </div>
 
-    <!-- Заметки -->
-    <div class="module collapsed module-medium" id="notes-module">
+    <div class="module collapsed" id="notes-module">
       <div class="module-header" onclick="toggleModule('notes-module')">
-        <h2>📝 Заметки</h2>
-        <span>▼</span>
+        <h2>Заметки</h2><span>▼</span>
       </div>
       <div class="module-content">
-        <input type="text" id="note-text" placeholder="Введите заметку" data-tooltip="Короткая заметка или идея">
-        <button class="button-medium" onclick="addNote()">Добавить</button>
-        <div class="error" id="notes-error"></div>
+        <button onclick="addNote()">Добавить</button>
         <ul id="note-list"></ul>
       </div>
     </div>
 
-    <!-- База знаний -->
-    <div class="module collapsed module-medium" id="knowledge-module">
+    <div class="module collapsed" id="knowledge-module">
       <div class="module-header" onclick="toggleModule('knowledge-module')">
-        <h2>📚 База знаний</h2>
-        <span>▼</span>
+        <h2>База знаний</h2><span>▼</span>
       </div>
       <div class="module-content">
-        <input type="text" id="knowledge-search" placeholder="Поиск по заголовкам/тегам" data-tooltip="Ищите по тегам или словам">
-        <button class="button-medium" onclick="openKnowledgeModal()">Добавить заметку</button>
-        <div class="error" id="knowledge-error"></div>
+        <button onclick="openKnowledgeModal()">Добавить</button>
         <ul id="knowledge-list"></ul>
       </div>
     </div>
 
-    <!-- Архетипы -->
-    <div class="module collapsed module-medium" id="archetype-module">
+    <div class="module collapsed" id="archetype-module">
       <div class="module-header" onclick="toggleModule('archetype-module')">
-        <h2>🧠 Архетипы</h2>
-        <span>▼</span>
+        <h2>Архетипы</h2><span>▼</span>
       </div>
       <div class="module-content">
-        <button class="button-medium" onclick="openArchetypeModal()">Пройти тест</button>
+        <button onclick="openArchetypeModal()">Добавить</button>
         <div id="archetype-result"></div>
-        <div class="error" id="archetype-error"></div>
       </div>
     </div>
 
-    <!-- Аналитика -->
-    <div class="module collapsed module-medium" id="analytics-module">
+    <div class="module collapsed" id="analytics-module">
       <div class="module-header" onclick="toggleModule('analytics-module')">
-        <h2>🔐 Аналитика</h2>
-        <span>▼</span>
+        <h2>Аналитика</h2><span>▼</span>
       </div>
       <div class="module-content">
-        <input type="password" id="analytics-password" placeholder="Введите пароль" data-tooltip="Пароль для доступа к аналитике">
-        <button class="button-medium" onclick="accessAnalytics()">Войти</button>
-        <div class="error" id="analytics-error"></div>
+        <button onclick="accessAnalytics()">Добавить</button>
         <div id="analytics-results"></div>
       </div>
     </div>
 
-    <!-- Настройки -->
-    <div class="module collapsed module-medium" id="settings-module">
+    <div class="module collapsed" id="settings-module">
       <div class="module-header" onclick="toggleModule('settings-module')">
-        <h2>⚙️ Настройки</h2>
-        <span>▼</span>
+        <h2>Настройки</h2><span>▼</span>
       </div>
       <div class="module-content">
-        <div>
-          <label>Состояние:</label>
-          <select id="state-select">
-            <option value="focus">⚖️ В фокусе</option>
-            <option value="fatigue">⚡️ Усталость</option>
-            <option value="rise">🚀 Подъём</option>
-          </select>
-          <button class="button-medium" onclick="applyState()">Применить</button>
-        </div>
-        <button class="button-medium" onclick="exportData()">Экспорт данных</button>
-        <input type="file" id="import-file" accept=".json">
-        <button class="button-medium" onclick="importData()">Импорт данных</button>
-        <select id="mode-select">
-          <option value="Absolute">Absolute</option>
-          <option value="Recon">Recon</option>
-          <option value="Hunter">Hunter</option>
-        </select>
-        <button class="button-medium" onclick="switchMode(document.getElementById('mode-select').value)">Сменить режим</button>
-        <div class="error" id="settings-error"></div>
+        <button onclick="exportData()">Экспорт</button>
+        <button onclick="importData()">Импорт</button>
       </div>
     </div>
 
-    <!-- Справка -->
-    <div class="module collapsed module-medium" id="help-module">
+    <div class="module collapsed" id="help-module">
       <div class="module-header" onclick="toggleModule('help-module')">
-        <h2>📚 Справка</h2>
-        <span>▼</span>
+        <h2>Справка</h2><span>▼</span>
       </div>
       <div class="module-content">
         <div id="help-content"></div>
-        <div class="error" id="help-error"></div>
       </div>
     </div>
 
-    <!-- Модальные окна -->
+    <div class="module collapsed" id="strategy-module">
+      <div class="module-header" onclick="toggleModule('strategy-module')">
+        <h2>Карта стратегии</h2><span>▼</span>
+      </div>
+      <div class="module-content">
+        <button onclick="openStrategyModal()">Добавить</button>
+        <div id="strategy-list"></div>
+      </div>
+    </div>
+
     <template id="person-modal-template">
       <div class="modal-content">
         <h2>Добавить человека</h2>
-        <input type="text" id="person-name" placeholder="Имя" data-tooltip="Введите имя человека">
-        <select id="person-status">
-          <option value="loyal">🟢 Лояльный</option>
-          <option value="neutral">🟡 Нейтрал</option>
-          <option value="hostile">🔴 Враг</option>
-          <option value="contract">✍️ Контракт</option>
-        </select>
-        <input type="text" id="person-tags" placeholder="Теги (через запятую)" data-tooltip="Например: Ресурс, Манипулятор">
-        <input type="number" id="person-karma" placeholder="Карма (-100 до +100)" data-tooltip="Карма <-50 = потенциальный враг">
-        <button class="button-medium" onclick="addPerson()">Добавить</button>
-        <button class="button-medium" onclick="closeModal('person-modal')">Закрыть</button>
-        <div class="error" id="person-modal-error"></div>
+        <input type="text" id="person-name" placeholder="Имя">
+        <button onclick="addPerson()">Добавить</button>
+        <button onclick="closeModal('person-modal')">Закрыть</button>
       </div>
     </template>
     <template id="strategy-modal-template">
       <div class="modal-content">
         <h2>Добавить стратегию</h2>
-        <input type="text" id="strategy-goal" placeholder="Цель" data-tooltip="🎯 Укажи, чего хочешь достичь">
-        <select id="strategy-people" multiple data-tooltip="Выберите участников из окружения"></select>
-        <input type="text" id="strategy-resources" placeholder="Ресурсы" data-tooltip="🧲 Кто/что может помочь">
-        <input type="text" id="strategy-levers" placeholder="Рычаги" data-tooltip="🎮 Давление, власть, информация">
-        <input type="text" id="strategy-obstacles" placeholder="Препятствия" data-tooltip="🪓 Что может помешать">
-        <input type="text" id="strategy-actions" placeholder="Действия" data-tooltip="⚙️ Как будешь действовать">
-        <select id="strategy-status">
-          <option value="plan">План</option>
-          <option value="in-progress">В процессе</option>
-          <option value="completed">Завершено</option>
-          <option value="failed">Провалено</option>
-        </select>
-        <button class="button-medium" onclick="addStrategy()">Добавить</button>
-        <button class="button-medium" onclick="closeModal('strategy-modal')">Закрыть</button>
-        <div class="error" id="strategy-modal-error"></div>
+        <input type="text" id="strategy-goal" placeholder="Цель">
+        <button onclick="addStrategy()">Добавить</button>
+        <button onclick="closeModal('strategy-modal')">Закрыть</button>
       </div>
     </template>
     <template id="knowledge-modal-template">
       <div class="modal-content">
         <h2>Добавить заметку</h2>
-        <input type="text" id="knowledge-title" placeholder="Заголовок" data-tooltip="Краткое название заметки">
-        <textarea id="knowledge-content" placeholder="Содержимое" data-tooltip="Подробное описание или идея"></textarea>
-        <input type="text" id="knowledge-tags" placeholder="Теги (через запятую)" data-tooltip="Теги для поиска, например: идея, проект">
-        <button class="button-medium" onclick="addKnowledge()">Добавить</button>
-        <button class="button-medium" onclick="closeModal('knowledge-modal')">Закрыть</button>
-        <div class="error" id="knowledge-modal-error"></div>
+        <input type="text" id="knowledge-title" placeholder="Заголовок">
+        <button onclick="addKnowledge()">Добавить</button>
+        <button onclick="closeModal('knowledge-modal')">Закрыть</button>
       </div>
     </template>
     <template id="archetype-modal-template">
       <div class="modal-content">
         <h2>Тест архетипа</h2>
-        <div id="archetype-progress"></div>
-        <div id="archetype-questions"></div>
-        <button class="button-medium" onclick="submitArchetype()">Отправить</button>
-        <button class="button-medium" onclick="closeModal('archetype-modal')">Закрыть</button>
-        <div class="error" id="archetype-modal-error"></div>
+        <button onclick="submitArchetype()">Отправить</button>
+        <button onclick="closeModal('archetype-modal')">Закрыть</button>
       </div>
     </template>
   </div>
@@ -330,14 +200,11 @@
   <script src="/ruleOfDay.js"></script>
   <script src="/plan.js"></script>
   <script src="/environment.js"></script>
-  <script src="/finance.js"></script>
-  <script src="/fitness.js"></script>
   <script src="/strategy.js"></script>
   <script src="/habits.js"></script>
   <script src="/notes.js"></script>
   <script src="/knowledge.js"></script>
   <script src="/archetype.js"></script>
-  <script src="/analytics.js"></script>
   <script src="/help.js"></script>
 </body>
 </html>
