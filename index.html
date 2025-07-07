@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#1a1a1a">
   <style>
     body { margin: 0; font-family: Arial, sans-serif; background: #1a1a1a; color: #e0e0e0; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 20px; background-size: cover; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
     .nav-bar { display: flex; flex-wrap: wrap; justify-content: space-around; background: #222; padding: 10px; margin-bottom: 20px; border-radius: 5px; }
     .module { border: 1px solid #444; margin: 10px 0; border-radius: 5px; }
     .module-header { padding: 10px; background: #333; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
@@ -21,15 +21,11 @@
     .modal-content { background: #333; padding: 20px; margin: 10% auto; width: 80%; max-width: 600px; border-radius: 5px; }
     .modal.show { display: block; }
     .critical-notification { display: none; color: #ff5555; padding: 10px; border: 1px solid #ff5555; margin: 10px 0; }
-    .button-small { padding: 10px 18px; font-size: 14px; }
-    .button-medium { padding: 16px 24px; font-size: 18px; } /* Увеличил кнопки */
-    .button-large { padding: 20px 28px; font-size: 20px; }
-    .module-small { max-width: 300px; }
+    .button-medium { padding: 18px 26px; font-size: 20px; } /* Ещё шире и выше */
     .module-medium { max-width: 400px; }
-    .module-large { max-width: 500px; }
     button { background: #007bff; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
     button:hover { background: #0056b3; }
-    select, input[type="text"], input[type="number"], input[type="file"], textarea { background: #333; color: #e0e0e0; border: 1px solid #444; padding: 5px; border-radius: 5px; }
+    select, input[type="text"], input[type="number"], textarea { background: #333; color: #e0e0e0; border: 1px solid #444; padding: 5px; border-radius: 5px; width: 100%; box-sizing: border-box; }
     .absolute { background: #1a1a1a; --accent: #ff5555; --accent-dark: #cc0000; }
     .recon { background: #1a1a1a; --accent: #55aaff; --accent-dark: #336699; }
     .hunter { background: #1a1a1a; --accent: #55ff55; --accent-dark: #33cc33; }
@@ -105,7 +101,6 @@
         <button class="button-medium" onclick="openPersonModal()">Добавить человека</button>
         <div class="error" id="environment-error"></div>
         <div id="people-list"></div>
-        <div id="network-graph"></div>
       </div>
     </div>
 
@@ -116,18 +111,89 @@
         <span>▼</span>
       </div>
       <div class="module-content">
-        <div class="finance-container">
-          <input type="number" id="finance-amount" placeholder="Сумма" data-tooltip="Введите сумму дохода или расхода">
-          <select id="finance-type">
-            <option value="income">Доход</option>
-            <option value="expense">Расход</option>
-          </select>
-          <input type="text" id="finance-tag" placeholder="Тег" data-tooltip="Например: зарплата, еда, транспорт">
-          <button class="button-medium" onclick="addTransaction()">Добавить</button>
-        </div>
+        <input type="number" id="finance-amount" placeholder="Сумма" data-tooltip="Введите сумму дохода или расхода">
+        <select id="finance-type">
+          <option value="income">Доход</option>
+          <option value="expense">Расход</option>
+        </select>
+        <input type="text" id="finance-tag" placeholder="Тег" data-tooltip="Например: зарплата, еда, транспорт">
+        <button class="button-medium" onclick="addTransaction()">Добавить</button>
         <div class="error" id="finance-error"></div>
-        <canvas id="finance-chart"></canvas>
         <ul id="finance-list"></ul>
+      </div>
+    </div>
+
+    <!-- Физо -->
+    <div class="module collapsed module-medium" id="fitness-module">
+      <div class="module-header" onclick="toggleModule('fitness-module')">
+        <h2>🏋️‍♂️ Физо</h2>
+        <span>▼</span>
+      </div>
+      <div class="module-content">
+        <input type="text" id="exercise-type" placeholder="Тип упражнения" data-tooltip="Например: бег, турник">
+        <input type="number" id="exercise-result" placeholder="Результат" data-tooltip="Кол-во повторений или время">
+        <button class="button-medium" onclick="addExercise()">Добавить</button>
+        <div class="error" id="fitness-error"></div>
+        <ul id="exercise-list"></ul>
+      </div>
+    </div>
+
+    <!-- Карта стратегии -->
+    <div class="module collapsed module-medium" id="strategy-module">
+      <div class="module-header" onclick="toggleModule('strategy-module')">
+        <h2>🗺️ Карта стратегии</h2>
+        <span>▼</span>
+      </div>
+      <div class="module-content">
+        <button class="button-medium" onclick="openStrategyModal()">Добавить стратегию</button>
+        <div class="error" id="strategy-error"></div>
+        <div id="strategy-list"></div>
+      </div>
+    </div>
+
+    <!-- Привычки -->
+    <div class="module collapsed module-medium" id="habits-module">
+      <div class="module-header" onclick="toggleModule('habits-module')">
+        <h2>🔄 Привычки</h2>
+        <span>▼</span>
+      </div>
+      <div class="module-content">
+        <input type="text" id="habit-text" placeholder="Введите привычку" data-tooltip="Например: читать 10 страниц">
+        <select id="habit-frequency">
+          <option value="daily">Ежедневно</option>
+          <option value="weekly">Еженедельно</option>
+        </select>
+        <button class="button-medium" onclick="addHabit()">Добавить</button>
+        <div class="error" id="habits-error"></div>
+        <ul id="habit-list"></ul>
+      </div>
+    </div>
+
+    <!-- Заметки -->
+    <div class="module collapsed module-medium" id="notes-module">
+      <div class="module-header" onclick="toggleModule('notes-module')">
+        <h2>📝 Заметки</h2>
+        <span>▼</span>
+      </div>
+      <div class="module-content">
+        <input type="text" id="note-text" placeholder="Введите заметку" data-tooltip="Короткая заметка или идея">
+        <button class="button-medium" onclick="addNote()">Добавить</button>
+        <div class="error" id="notes-error"></div>
+        <ul id="note-list"></ul>
+      </div>
+    </div>
+
+    <!-- База знаний -->
+    <div class="module collapsed module-medium" id="knowledge-module">
+      <div class="module-header" onclick="toggleModule('knowledge-module')">
+        <h2>📚 База знаний</h2>
+        <span>▼</span>
+      </div>
+      <div class="module-content">
+        <input type="text" id="knowledge-search" placeholder="Поиск по заголовкам/тегам" data-tooltip="Ищите по тегам или словам">
+        <button class="button-medium" onclick="openKnowledgeModal()">Добавить заметку</button>
+        <div class="error" id="knowledge-error"></div>
+        <ul id="knowledge-list"></ul>
       </div>
     </div>
 
@@ -144,17 +210,46 @@
       </div>
     </div>
 
-    <!-- База знаний -->
-    <div class="module collapsed module-medium" id="knowledge-module">
-      <div class="module-header" onclick="toggleModule('knowledge-module')">
-        <h2>📚 База знаний</h2>
+    <!-- Аналитика -->
+    <div class="module collapsed module-medium" id="analytics-module">
+      <div class="module-header" onclick="toggleModule('analytics-module')">
+        <h2>🔐 Аналитика</h2>
         <span>▼</span>
       </div>
       <div class="module-content">
-        <input type="text" id="knowledge-search" placeholder="Поиск по заголовкам/тегам" data-tooltip="Ищите по тегам или словам">
-        <button class="button-medium" onclick="openKnowledgeModal()">Добавить заметку</button>
-        <div class="error" id="knowledge-error"></div>
-        <ul id="knowledge-list"></ul>
+        <input type="password" id="analytics-password" placeholder="Введите пароль" data-tooltip="Пароль для доступа к аналитике">
+        <button class="button-medium" onclick="accessAnalytics()">Войти</button>
+        <div class="error" id="analytics-error"></div>
+        <div id="analytics-results"></div>
+      </div>
+    </div>
+
+    <!-- Настройки -->
+    <div class="module collapsed module-medium" id="settings-module">
+      <div class="module-header" onclick="toggleModule('settings-module')">
+        <h2>⚙️ Настройки</h2>
+        <span>▼</span>
+      </div>
+      <div class="module-content">
+        <div>
+          <label>Состояние:</label>
+          <select id="state-select">
+            <option value="focus">⚖️ В фокусе</option>
+            <option value="fatigue">⚡️ Усталость</option>
+            <option value="rise">🚀 Подъём</option>
+          </select>
+          <button class="button-medium" onclick="applyState()">Применить</button>
+        </div>
+        <button class="button-medium" onclick="exportData()">Экспорт данных</button>
+        <input type="file" id="import-file" accept=".json">
+        <button class="button-medium" onclick="importData()">Импорт данных</button>
+        <select id="mode-select">
+          <option value="Absolute">Absolute</option>
+          <option value="Recon">Recon</option>
+          <option value="Hunter">Hunter</option>
+        </select>
+        <button class="button-medium" onclick="switchMode(document.getElementById('mode-select').value)">Сменить режим</button>
+        <div class="error" id="settings-error"></div>
       </div>
     </div>
 
@@ -188,6 +283,26 @@
         <div class="error" id="person-modal-error"></div>
       </div>
     </template>
+    <template id="strategy-modal-template">
+      <div class="modal-content">
+        <h2>Добавить стратегию</h2>
+        <input type="text" id="strategy-goal" placeholder="Цель" data-tooltip="🎯 Укажи, чего хочешь достичь">
+        <select id="strategy-people" multiple data-tooltip="Выберите участников из окружения"></select>
+        <input type="text" id="strategy-resources" placeholder="Ресурсы" data-tooltip="🧲 Кто/что может помочь">
+        <input type="text" id="strategy-levers" placeholder="Рычаги" data-tooltip="🎮 Давление, власть, информация">
+        <input type="text" id="strategy-obstacles" placeholder="Препятствия" data-tooltip="🪓 Что может помешать">
+        <input type="text" id="strategy-actions" placeholder="Действия" data-tooltip="⚙️ Как будешь действовать">
+        <select id="strategy-status">
+          <option value="plan">План</option>
+          <option value="in-progress">В процессе</option>
+          <option value="completed">Завершено</option>
+          <option value="failed">Провалено</option>
+        </select>
+        <button class="button-medium" onclick="addStrategy()">Добавить</button>
+        <button class="button-medium" onclick="closeModal('strategy-modal')">Закрыть</button>
+        <div class="error" id="strategy-modal-error"></div>
+      </div>
+    </template>
     <template id="knowledge-modal-template">
       <div class="modal-content">
         <h2>Добавить заметку</h2>
@@ -211,16 +326,18 @@
     </template>
   </div>
 
-  <script src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
   <script src="/utils.js"></script>
   <script src="/ruleOfDay.js"></script>
   <script src="/plan.js"></script>
   <script src="/environment.js"></script>
   <script src="/finance.js"></script>
-  <script src="/archetype.js"></script>
+  <script src="/fitness.js"></script>
+  <script src="/strategy.js"></script>
+  <script src="/habits.js"></script>
+  <script src="/notes.js"></script>
   <script src="/knowledge.js"></script>
+  <script src="/archetype.js"></script>
+  <script src="/analytics.js"></script>
   <script src="/help.js"></script>
 </body>
 </html>
