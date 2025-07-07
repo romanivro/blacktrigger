@@ -181,18 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
     switchMode(mode);
     document.getElementById('mode-select').value = mode;
     const customSettings = JSON.parse(localStorage.getItem('customSettings') || '{}');
-    if (customSettings.moduleSize) {
-      document.querySelectorAll('.module').forEach(module => {
-        module.classList.add(`module-${customSettings.moduleSize}`);
-      });
-      document.getElementById('module-size').value = customSettings.moduleSize;
-    }
-    if (customSettings.buttonSize) {
-      document.querySelectorAll('button').forEach(button => {
-        button.classList.add(`button-${customSettings.buttonSize}`);
-      });
-      document.getElementById('button-size').value = customSettings.buttonSize;
-    }
     const state = localStorage.getItem('userState') || 'focus';
     document.getElementById('state-select').value = state;
     checkInactivity();
