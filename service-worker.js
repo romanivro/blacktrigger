@@ -1,5 +1,5 @@
-const CACHE_NAME = 'blacktrigger-hq-v4';
-const urlsToCache = ['/', '/index.html'];
+const CACHE_NAME = 'blacktrigger-hq-v6';
+const urlsToCache = ['/', '/index.html', '/utils.js', '/ruleOfDay.js', '/plan.js', '/help.js'];
 
 self.addEventListener('install', event => {
   event.waitUntil(
