@@ -1,9 +1,11 @@
 function initFinance() {
   try {
     const financeList = document.getElementById('finance-list');
-    const financeChart = document.getElementById('finance-chart').getContext('2d');
+    if (!financeList) {
+      showError('finance', 'Элемент списка транзакций не найден');
+      return;
+    }
     let transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-    let chart;
 
     const renderTransactions = () => {
       try {
@@ -16,8 +18,6 @@ function initFinance() {
           `;
           financeList.appendChild(li);
         });
-        updateChart();
-        renderAnalytics();
         showError('finance', '');
       } catch (e) {
         showError('finance', 'Не удалось отобразить транзакции: ' + e.message);
@@ -55,32 +55,6 @@ function initFinance() {
         logActivity(`Удалена транзакция: ${transaction.type} ${transaction.amount}`);
       } catch (e) {
         showError('finance', 'Не удалось удалить транзакцию: ' + e.message);
-      }
-    };
-
-    const updateChart = () => {
-      try {
-        if (chart) chart.destroy();
-        const tags = [...new Set(transactions.map(t => t.tag))];
-        const incomeData = tags.map(tag => 
-          transactions.filter(t => t.tag === tag && t.type === 'income').reduce((sum, t) => sum + t.amount, 0)
-        );
-        const expenseData = tags.map(tag => 
-          transactions.filter(t => t.tag === tag && t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)
-        );
-        chart = new Chart(financeChart, {
-          type: 'bar',
-          data: {
-            labels: tags,
-            datasets: [
-              { label: 'Доходы', data: incomeData, backgroundColor: '#55ff55' },
-              { label: 'Расходы', data: expenseData, backgroundColor: '#ff5555' }
-            ]
-          },
-          options: { scales: { y: { beginAtZero: true } } }
-        });
-      } catch (e) {
-        showError('finance', 'Ошибка рендеринга графика: ' + e.message);
       }
     };
 
