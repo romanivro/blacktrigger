@@ -1,25 +1,30 @@
 function initEnvironment() {
   try {
     const peopleList = document.getElementById('people-list');
-    const networkGraph = document.getElementById('network-graph');
+    if (!peopleList) {
+      showError('environment', 'Элемент списка людей не найден');
+      return;
+    }
     let people = JSON.parse(localStorage.getItem('people') || '[]');
 
     const renderPeople = () => {
       try {
         peopleList.innerHTML = '';
+        people = Array.isArray(people) ? people : [];
         people.forEach((person, index) => {
           const div = document.createElement('div');
           div.className = 'profile-card';
           div.innerHTML = `
-            ${person.name} (${person.status}, Карма: ${person.karma})
+            ${person.name} (${person.status}, Карма: ${person.karma}, Теги: ${person.tags.join(', ')})
             <button class="button-medium" onclick="deletePerson(${index})">❌</button>
           `;
           peopleList.appendChild(div);
         });
-        renderNetwork();
-        updateStrategyPeopleSelect();
+        window.updateStrategyPeopleSelect();
         showError('environment', '');
       } catch (e) {
+        showError('environment', 'Не удалось отобразить окружение: ' Tertiary
+
         showError('environment', 'Не удалось отобразить окружение: ' + e.message);
       }
     };
@@ -62,7 +67,6 @@ function initEnvironment() {
         const select = document.getElementById('strategy-people');
         if (!select) return;
         select.innerHTML = '';
-        people = Array.isArray(people) ? people : [];
         people.forEach((person, index) => {
           const option = document.createElement('option');
           option.value = index;
@@ -71,29 +75,6 @@ function initEnvironment() {
         });
       } catch (e) {
         showError('strategy', 'Ошибка обновления списка людей: ' + e.message);
-      }
-    };
-
-    const renderNetwork = () => {
-      try {
-        const nodes = people.map((person, index) => ({
-          id: index,
-          label: person.name,
-          color: person.status === 'loyal' ? '#55ff55' : person.status === 'neutral' ? '#ffff55' : person.status === 'hostile' ? '#ff5555' : '#55aaff'
-        }));
-        const edges = [];
-        people.forEach((person, i) => {
-          people.forEach((other, j) => {
-            if (i < j && person.tags.some(tag => other.tags.includes(tag))) {
-              edges.push({ from: i, to: j });
-            }
-          });
-        });
-        const data = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
-        const options = { nodes: { shape: 'dot', size: 20 }, edges: { color: '#e0e0e0' } };
-        new vis.Network(networkGraph, data, options);
-      } catch (e) {
-        showError('environment', 'Ошибка рендеринга графа: ' + e.message);
       }
     };
 
