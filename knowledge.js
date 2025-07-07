@@ -2,6 +2,10 @@ function initKnowledge() {
   try {
     const knowledgeList = document.getElementById('knowledge-list');
     const knowledgeSearch = document.getElementById('knowledge-search');
+    if (!knowledgeList || !knowledgeSearch) {
+      showError('knowledge', 'Элементы интерфейса не найдены');
+      return;
+    }
     let knowledge = JSON.parse(localStorage.getItem('knowledge') || '[]');
 
     const renderKnowledge = () => {
