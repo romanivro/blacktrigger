@@ -2,6 +2,10 @@ function initRuleOfDay() {
   try {
     const ruleText = document.getElementById('rule-text');
     const customRuleInput = document.getElementById('custom-rule');
+    if (!ruleText || !customRuleInput) {
+      showError('rule', 'Элементы интерфейса не найдены');
+      return;
+    }
     let currentRule = JSON.parse(localStorage.getItem('currentRule') || '{}');
     let customRules = JSON.parse(localStorage.getItem('customRules') || '[]');
     const defaultRules = [
@@ -18,17 +22,20 @@ function initRuleOfDay() {
     ];
 
     const updateRule = () => {
-      const today = new Date().toDateString();
-      if (currentRule.date !== today) {
-        const rule = customRules.length > 0 && Math.random() > 0.5
-          ? customRules[Math.floor(Math.random() * customRules.length)]
-          : defaultRules[Math.floor(Math.random() * defaultRules.length)];
-        currentRule = { text: rule, adhered: 0, violated: 0, date: today };
-        localStorage.setItem('currentRule', JSON.stringify(currentRule));
+      try {
+        const today = new Date().toDateString();
+        if (currentRule.date !== today) {
+          const rule = customRules.length > 0 && Math.random() > 0.5
+            ? customRules[Math.floor(Math.random() * customRules.length)]
+            : defaultRules[Math.floor(Math.random() * defaultRules.length)];
+          currentRule = { text: rule, adhered: 0, violated: 0, date: today };
+          localStorage.setItem('currentRule', JSON.stringify(currentRule));
+        }
+        ruleText.textContent = currentRule.text || 'Правило не выбрано';
+        showError('rule', '');
+      } catch (e) {
+        showError('rule', 'Ошибка обновления правила: ' + e.message);
       }
-      ruleText.textContent = currentRule.text;
-      renderAnalytics();
-      showError('rule', '');
     };
 
     window.addCustomRule = () => {
@@ -53,7 +60,6 @@ function initRuleOfDay() {
       try {
         currentRule.adhered = (currentRule.adhered || 0) + 1;
         localStorage.setItem('currentRule', JSON.stringify(currentRule));
-        renderAnalytics();
         logActivity(`Правило "${currentRule.text}" соблюдено`);
         showError('rule', '');
       } catch (e) {
@@ -65,7 +71,6 @@ function initRuleOfDay() {
       try {
         currentRule.violated = (currentRule.violated || 0) + 1;
         localStorage.setItem('currentRule', JSON.stringify(currentRule));
-        renderAnalytics();
         logActivity(`Правило "${currentRule.text}" нарушено`);
         showError('rule', '');
       } catch (e) {
