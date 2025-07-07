@@ -181,9 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
     switchMode(mode);
     document.getElementById('mode-select').value = mode;
     const customSettings = JSON.parse(localStorage.getItem('customSettings') || '{}');
-    if (customSettings.backgroundImage) {
-      document.querySelector('.container').style.backgroundImage = `url(${customSettings.backgroundImage})`;
-    }
     if (customSettings.moduleSize) {
       document.querySelectorAll('.module').forEach(module => {
         module.classList.add(`module-${customSettings.moduleSize}`);
