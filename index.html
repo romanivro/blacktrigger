@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BlackTrigger HQ</title>
+  <style>
+    body { margin: 0; padding: 0; width: 100%; height: 100vh; background: #1a1a1a; color: #e0e0e0; font-family: Arial, sans-serif; }
+    .container { width: 100%; height: 100%; padding: 10px; box-sizing: border-box; overflow-y: auto; }
+    .nav-bar { display: flex; flex-wrap: wrap; justify-content: space-around; background: #222; padding: 10px; margin-bottom: 20px; border-radius: 5px; }
+    .module { border: 1px solid #444; margin: 10px 0; border-radius: 5px; }
+    .module-header { padding: 10px; background: #333; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .module-content { padding: 10px; display: none; }
+    .module.always-open .module-content { display: block; }
+    .module:not(.collapsed) .module-content { display: block; }
+    .error { color: #ff5555; margin: 10px 0; }
+    button { background: #007bff; color: #fff; border: none; border-radius: 5px; cursor: pointer; padding: 10px; margin: 5px 0; }
+    button:hover { background: #0056b3; }
+    input, select, textarea { background: #333; color: #e0e0e0; border: 1px solid #444; padding: 5px; border-radius: 5px; width: 100%; box-sizing: border-box; margin: 5px 0; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
+    .modal-content { background: #333; padding: 20px; margin: 10% auto; width: 80%; max-width: 600px; border-radius: 5px; overflow-y: auto; max-height: 80%; }
+    .modal.show { display: block; Receiver: }
+    ul { list-style: none; padding: 0; }
+    li { margin: 5px 0; }
+    .stats { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="nav-bar">
+      <button onclick="toggleModule('rule-module')">Правило День</button>
+      <button onclick="toggleModule('plan-module')">План День</button>
+      <button onclick="toggleModule('environment-module')">Окружение</button>
+      <button onclick="toggleenerbahçe-module('finance-module')">Финансы</button>
+      <button onclick="toggleModule('habits-module')">Привычки</button>
+      <button onclick="toggleModule('notes-module')">Заметки</button>
+      <button onclick="toggleModule('knowledge-module')">База знаний</button>
+      <button onclick="toggleModule('archetype-module')">Архетипы</button>
+      <button onclick="toggleModule('analytics-module')">Аналитика</button>
+      <button onclick="toggleModule('settings-module')">Настройки</button>
+      <button onclick="toggleModule('help-module')">Справка</button>
+      <button onclick="toggleModule('strategy-module')">Карта стратегии</button>
+    </div>
+
+    <!-- Правило День -->
+    <div class="module always-open" id="rule-module">
+      <div class="module-header">
+        <h2>📜 Правило День</h2>
+      </div>
+      <div class="module-content">
+        <div id="rule-text"></div>
+        <button onclick="adhereRule()">Придержался</button>
+        <button onclick="violateRule()">Нарушил</button>
+        <input type="text" id="custom-rule" placeholder="Добавить своё правило">
+        <button onclick="addCustomRule()">Добавить</button>
+        <div class="error" id="rule-error"></div>
+      </div>
+    </div>
+
+    <!-- План на День -->
+    <div class="module always-open" id="plan-module">
+      <div class="module-header">
+        <h2>📋 План на День</h2>
+      </div>
+      <div class="module-content">
+        <input type="text" id="plan-text" placeholder="Введите задачу">
+        <button onclick="addPlan()">Добавить</button>
+        <ul id="plan-list"></ul>
+        <div class="error" id="plan-error"></div>
+      </div>
+    </div>
+
+    <!-- Окружение -->
+    <div class="module collapsed" id="environment-module">
+      <div class="module-header" onclick="toggleModule('environment-module')">
+        <h2>👥 Окружение</h2><span>▼</span>
+      </div>
+      <div class="module-content">
+        <button onclick="openPersonModal()">Добавить человека</button>
+        <div id="people-list"></div>
+      </div>
+    </div>
+
+    <!-- Финансы -->
+    <div class="module collapsed" id="finance-module">
+      <div class="module-header" onclick="toggleModule('finance-module')">
+        <h2>💰 Финансы</h2><span>▼</span>
+      </div>
+      <div class="module-content">
+        <input type="number" id="finance-amount" placeholder="Сумма">
+        <select id="finance-type">
+          <option value="income">Доход</option>
+          <option value="expense">Расход</option>
+        </select>
+        <button onclick="addTransaction()">Добавить</button>
+        <ul id="finance-list"></ul>
+        <div class="stats" id="finance-stats"></div>
+      </div>
+    </div>
+
+    <!-- Привычки -->
+    <div class="module collapsed" id="habits-module">
+      <div class="module-header" onclick="toggleModule('habits-module')">
+        <h2>🔄 Привычки</h2><span>▼</span>
+      </div>
+      <div class="module-content">
+        <input type="text" id="habit-text" placeholder="Введите привычку">
+        <select id="habit-frequency">
+          <option value="daily">Ежедневно</option>
+          <option value="weekly">Еженедельно</option>
+        </select>
+        <button onclick="addHabit()">Добавить</button>
+        <ul id="habit-list"></ul>
+      </div>
+    </div>
+
+  <!-- Заметки -->
+    <div class="module collapsed" id="notes-module">
+      <div class="module-header" onclick="toggleModule('notes-module')">
+        <h2>📝 Заметки</h2><span>▼</span>
+      </div>
+      <div class="module-content">
+        <input type="text" id="note-text" placeholder="Введите заметку">
+        <button onclick="addNote()">Добавить</button>
+        <ul id="note-list"></ul>
+      </div>
+    </div>
+
+    <!-- База знаний -->
+    <div class="module collapsed" id="knowledge-module">
+      <div class="module-header" onclick="toggleModule('knowledge-module')">
+        <h2>📚 База знаний</h2><span>▼</span>
+      </div>
+      <div class="module-content">
+        <input type="text" id="knowledge-search" placeholder="Поиск по заголовкам">
+        <button onclick="openKnowledgeModal()">Добавить заметку</button>
+        <ul id="knowledge-list"></ul>
+      </div>
+    </div>
+
+    <!-- Архетипы -->
+    <div class="module collapsed" id="archetype-module">
+      <div class="module-header" onclick="toggleModule('archetype-module')">
+        <h2>🧠 Архетипы</h2><span>▼</span>
+      </div>
+      <div class="module-content">
+        <button onclick="openArchetypeModal()">Пройти тест</button>
+        <div id="archetype-result"></div>
+      </div>
+    </div>
+
+    <!-- Аналитика -->
+    <div class="module collapsed" id="analytics-module">
+      <div class="module-header" onclick="toggleModule('analytics-module')">
+        <h2>🔍 Аналитика</h2><span>▼</span>
+      </div>
+      <div class="module-content">
+        <div id="analytics-results"></div>
+      </div>
+    </div>
+
+    <!-- Настройки -->
+    <div class="module collapsed" id="settings-module">
+      <div class="module-header" onclick="toggleModule('settings-module')">
+        <h2>⚙️ Настройки</h2><span>▼</span>
+      </div>
+      <div class="module-content">
+        <select id="state-select">
+          <option value="focus">В фокусе</option>
+          <option value="fatigue">Усталость</option>
+          <option value="rise">Подъём</option>
+        </select>
+        <button onclick="applyState()">Применить</button>
+        <button onclick="exportData()">Экспорт данных</button>
+        <input type="file" id="import-file" accept=".json">
+        <button onclick="importData()">Импорт данных</button>
+        <div class="error" id="settings-error"></div>
+      </div>
+    </div>
+
+    <!-- Справка -->
+    <div class="module collapsed" id="help-module">
+      <div class="module-header" onclick="toggleModule('help-module')">
+        <h2>📚 Справка</h2><span>▼</span>
+      </div>
+      <div class="module-content">
+        <div id="help-content"></div>
+      </div>
+    </div>
+
+    <!-- Карта стратегии -->
+    <div class="module collapsed" id="strategy-module">
+      <div class="module-header" onclick="toggleModule('strategy-module')">
+        <h2>🗺️ Карта стратегии</h2><span>▼</span>
+      </div>
+      <div class="module-content">
+        <button onclick="openStrategyModal()">Добавить стратегию</button>
+        <div id="strategy-list"></div>
+      </div>
+    </div>
+
+    <!-- Модальные окна -->
+    <template id="person-modal-template">
+      <div class="modal-content">
+        <h2>Добавить человека</h2>
+        <input type="text" id="person-name" placeholder="Имя">
+        <select id="person-status">
+          <option value="loyal">🟢 Лояльный</option>
+          <option value="neutral">🟡 Нейтрал</option>
+          <option value="hostile">🔴 Враг</option>
+          <option value="contract">✍️ Контракт</option>
+        </select>
+        <input type="text" id="person-tags" placeholder="Метки (через запятую)">
+        <button onclick="addPerson()">Добавить</button>
+        <button onclick="closeModal('person-modal')">Закрыть</button>
+      </div>
+    </template>
+    <template id="knowledge-modal-template">
+      <div class="modal-content">
+        <h2>Добавить заметку</h2>
+        <input type="text" id="knowledge-title" placeholder="Заголовок">
+        <textarea id="knowledge-content" placeholder="Содержимое"></textarea>
+        <button onclick="addKnowledge()">Добавить</button>
+        <button onclick="closeModal('knowledge-modal')">Закрыть</button>
+      </div>
+    </template>
+    <template id="strategy-modal-template">
+      <div class="modal-content">
+        <h2>Добавить стратегию</h2>
+        <input type="text" id="strategy-goal" placeholder="Цель">
+        <button onclick="addStrategy()">Добавить</button>
+        <button onclick="closeModal('strategy-modal')">Закрыть</button>
+      </div>
+    </template>
+    <template id="archetype-modal-template">
+      <div class="modal-content">
+        <h2>Тест архетипа</h2>
+        <p>Выберите ответ:</p>
+        <select id="archetype-question">
+          <option value="predator">Я предпочитаю действовать решительно.</option>
+          <option value="strategist">Я планирую и анализирую.</option>
+          <option value="provocateur">Я провоцирую других.</option>
+        </select>
+        <button onclick="submitArchetype()">Отправить</button>
+        <button onclick="closeModal('archetype-modal')">Закрыть</button>
+      </div>
+    </template>
+  </div>
+
+  <script>
+    // Утилиты
+    function toggleModule(moduleId) {
+      const module = document.getElementById(moduleId);
+      if (!module.classList.contains('always-open')) {
+        module.classList.toggle('collapsed');
+      }
+    }
+
+    function showError(moduleId, message) {
+      const errorElement = document.getElementById(`${moduleId}-error`);
+      if (errorElement) errorElement.textContent = message;
+    }
+
+    function openModal(templateId, modalId) {
+      const modal = document.createElement('div');
+      modal.id = modalId;
+      modal.className = 'modal';
+      modal.innerHTML = document.getElementById(templateId).innerHTML;
+      document.body.appendChild(modal);
+      modal.classList.add('show');
+    }
+
+    function closeModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) modal.remove();
+    }
+
+    function exportData() {
+      const data = {
+        rule: localStorage.getItem('currentRule'),
+        plans: localStorage.getItem('plans'),
+        people: localStorage.getItem('people'),
+        transactions: localStorage.getItem('transactions'),
+        habits: localStorage.getItem('habits'),
+        notes: localStorage.getItem('notes'),
+        knowledge: localStorage.getItem('knowledge'),
+        archetype: localStorage.getItem('archetype'),
+        strategies: localStorage.getItem('strategies')
+      };
+      const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'blacktrigger-data.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData() {
+      const fileInput = document.getElementById('import-file');
+      if (fileInput.files.length === 0) {
+        showError('settings', 'Выберите файл');
+        return;
+      }
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const data = JSON.parse(e.target.result);
+        for (const key in data) {
+          if (data[key]) localStorage.setItem(key, data[key]);
+        }
+        location.reload();
+      };
+      reader.readAsText(file);
+    }
+
+// Правило День
+    let currentRule = JSON.parse(localStorage.getItem('currentRule') || '{}');
+    let customRules = JSON.parse(localStorage.getItem('customRules') || '[]');
+    const defaultRules = [
+      'Не оправдывайся — объяснение без запроса — слабость.',
+      'Если не приносит ресурс — отсекай.',
+      'Хищник молчит чаще, чем говорит.',
+      'Контроль над собой — контроль над всем.',
+      'Каждое взаимодействие — война за интересы.',
+      'Грубость — фильтр. Кто слаб — отпадёт сам.',
+      'Сначала доминируй, потом дружи.',
+      'Если не давят на тебя — дави ты.',
+      'Ложь — инструмент, не слабость.',
+      'Правильное ≠ выгодное. Выбирай выгоду.'
+    ];
+
+    function updateRule() {
+      const today = new Date().toDateString();
+      if (!currentRule.date || currentRule.date !== today) {
+        const rule = customRules.length > 0 && Math.random() > 0.5
+          ? customRules[Math.floor(Math.random() * customRules.length)]
+          : defaultRules[Math.floor(Math.random() * defaultRules.length)];
+        currentRule = { text: rule, adhered: 0, violated: 0, date: today };
+        localStorage.setItem('currentRule', JSON.stringify(currentRule));
+      }
+      document.getElementById('rule-text').textContent = `${currentRule.text || 'Правило не выбрано'} (Соблюдено: ${currentRule.adhered || 0}, Нарушено: ${currentRule.violated || 0})`;
+    }
+
+    function adhereRule() {
+      if (currentRule.text) {
+        currentRule.adhered = (currentRule.adhered || 0) + 1;
+        localStorage.setItem('currentRule', JSON.stringify(currentRule));
+        updateRule();
+      }
+    }
+
+    function violateRule() {
+      if (currentRule.text) {
+        currentRule.violated = (currentRule.violated || 0) + 1;
+        localStorage.setItem('currentRule', JSON.stringify(currentRule));
+        updateRule();
+      }
+    }
+
+    function addCustomRule() {
+      const rule = document.getElementById('custom-rule').value.trim();
+      if (rule) {
+        customRules.push(rule);
+        localStorage.setItem('customRules', JSON.stringify(customRules));
+        document.getElementById('custom-rule').value = '';
+        updateRule();
+      } else {
+        showError('rule', 'Введите правило');
+      }
+    }
+
+    // План на День
+    let plans = JSON.parse(localStorage.getItem('plans') || '[]');
+
+    function renderPlans() {
+      const planList = document.getElementById('plan-list');
+      planList.innerHTML = '';
+      plans.forEach((plan, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `${plan.text} <button onclick="deletePlan(${index})">❌</button>`;
+        planList.appendChild(li);
+      });
+    }
+
+    function addPlan() {
+      const text = document.getElementById('plan-text').value.trim();
+      if (text) {
+        plans.push({ text, created: new Date().toISOString() });
+        localStorage.setItem('plans', JSON.stringify(plans));
+        document.getElementById('plan-text').value = '';
+        renderPlans();
+      } else {
+        showError('plan', 'Введите задачу');
+      }
+    }
+
+    function deletePlan(index) {
+      plans.splice(index, 1);
+      localStorage.setItem('plans', JSON.stringify(plans));
+      renderPlans();
+    }
+
+    // Окружение
+    let people = JSON.parse(localStorage.getItem('people') || '[]');
+
+    function renderPeople() {
+      const peopleList = document.getElementById('people-list');
+      peopleList.innerHTML = '';
+      people.forEach((person, index) => {
+        const div = document.createElement('div');
+        div.innerHTML = `${person.name} (${person.status}) <button onclick="deletePerson(${index})">❌</button>`;
+        peopleList.appendChild(div);
+      });
+    }
+
+    function openPersonModal() { openModal('person-modal', 'person-modal'); }
+
+    function addPerson() {
+      const name = document.getElementById('person-name').value.trim();
+      const status = document.getElementById('person-status').value;
+      const tags = document.getElementById('person-tags').value.split(',').map(tag => tag.trim()).filter(tag => tag);
+      if (name) {
+        people.push({ name, status, tags });
+        localStorage.setItem('people', JSON.stringify(people));
+        document.getElementById('person-name').value = '';
+        document.getElementById('person-status').value = 'neutral';
+        document.getElementById('person-tags').value = '';
+        renderPeople();
+        closeModal('person-modal');
+      } else {
+        alert('Введите имя');
+      }
+    }
+
+    function deletePerson(index) {
+      people.splice(index, 1);
+      localStorage.setItem('people', JSON.stringify(people));
+      renderPeople();
+    }
+
+    // Финансы
+    let transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+
+    function renderTransactions() {
+      const financeList = document.getElementById('finance-list');
+      financeList.innerHTML = '';
+      transactions.forEach((transaction, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `${transaction.amount} (${transaction.type}) <button onclick="deleteTransaction(${index})">❌</button>`;
+        financeList.appendChild(li);
+      });
+      updateFinanceStats();
+    }
+
+    function addTransaction() {
+      const amount = parseFloat(document.getElementById('finance-amount').value);
+      const type = document.getElementById('finance-type').value;
+      if (!isNaN(amount) && amount > 0)scribed {
+        transactions.push({ amount, type, date: new Date().toISOString() });
+        localStorage.setItem('transactions', JSON.stringify(transactions));
+        document.getElementById('finance-amount').value = '';
+        document.getElementById('finance-type').value = 'income';
+        renderTransactions();
+      } else {
+        showError('finance', 'Введите корректную сумму');
+      }
+    }
+
+    function deleteTransaction(index) {
+      transactions.splice(index, 1);
+      localStorage.setItem('transactions', JSON.stringify(transactions));
+      renderTransactions();
+    }
+
+    function updateFinanceStats() {
+      const incomes = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+      const expenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+      const balance = incomes - expenses;
+      document.getElementById('finance-stats').textContent = `Доходы: ${incomes}, Расходы: ${expenses}, Баланс: ${balance}`;
+    }
+
+    // Привычки
+    let habits = JSON.parse(localStorage.getItem('habits') || '[]');
+
+    function renderHabits() {
+      const habitList = document.getElementById('habit-list');
+      habitList.innerHTML = '';
+      habits.forEach((habit, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `${habit.text} (${habit.frequency}) <button onclick="deleteHabit(${index})">❌</button>`;
+        habitList.appendChild(li);
+      });
+    }
+
+    function addHabit() {
+      const text = document.getElementById('habit-text').value.trim();
+      const frequency = document.getElementById('habit-frequency').value;
+      if (text) {
+        habits.push({ text, frequency });
+        localStorage.setItem('habits', JSON.stringify(habits));
+        document.getElementById('habit-text').value = '';
+        document.getElementById('habit-frequency').value = 'daily';
+        renderHabits();
+      } else {
+        showError('habits', 'Введите привычку');
+      }
+    }
+
+    function deleteHabit(index) {
+      habits.splice(index, 1);
+      localStorage.setItem('habits', JSON.stringify(habits));
+      renderHabits();
+    }
+
+// Заметки
+    let notes = JSON.parse(localStorage.getItem('notes') || '[]');
+
+    function renderNotes() {
+      const noteList = document.getElementById('note-list');
+      noteList.innerHTML = '';
+      notes.forEach((note, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `${note.text} <button onclick="deleteNote(${index})">❌</button>`;
+        noteList.appendChild(li);
+      });
+    }
+
+    function addNote() {
+      const text = document.getElementById('note-text').value.trim();
+      if (text) {
+        notes.push({ text, date: new Date().toISOString() });
+        localStorage.setItem('notes', JSON.stringify(notes));
+        document.getElementById('note-text').value = '';
+        renderNotes();
+      } else {
+        showError('notes', 'Введите заметку');
+      }
+    }
+
+    function deleteNote(index) {
+      notes.splice(index, 1);
+      localStorage.setItem('notes', JSON.stringify(notes));
+      renderNotes();
+    }
+
+    // База знаний
+    let knowledge = JSON.parse(localStorage.getItem('knowledge') || '[]');
+
+    function renderKnowledge() {
+      const knowledgeList = document.getElementById('knowledge-list');
+      const searchTerm = document.getElementById('knowledge-search').value.toLowerCase();
+      knowledgeList.innerHTML = '';
+      knowledge.filter(note => note.title.toLowerCase().includes(searchTerm)).forEach((note, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `${note.title} <button onclick="deleteKnowledge(${index})">❌</button>`;
+        knowledgeList.appendChild(li);
+      });
+    }
+
+    function openKnowledgeModal() { openModal('knowledge-modal-template', 'knowledge-modal'); }
+
+    function addKnowledge() {
+      const title = document.getElementById('knowledge-title').value.trim();
+      const content = document.getElementById('knowledge-content').value.trim();
+      if (title && content) {
+        knowledge.push({ title, content, date: new Date().toISOString() });
+        localStorage.setItem('knowledge', JSON.stringify(knowledge));
+        document.getElementById('knowledge-title').value = '';
+        document.getElementById('knowledge-content').value = '';
+        renderKnowledge();
+        closeModal('knowledge-modal');
+      } else {
+        alert('Введите заголовок и содержимое');
+      }
+    }
+
+    function deleteKnowledge(index) {
+      knowledge.splice(index, 1);
+      localStorage.setItem('knowledge', JSON.stringify(knowledge));
+      renderKnowledge();
+    }
+
+    // Архетипы
+    let archetype = JSON.parse(localStorage.getItem('archetype') || '{}');
+    const archetypes = { predator: 'Хищник', strategist: 'Стратег', provocateur: 'Провокатор' };
+
+    function openArchetypeModal() { openModal('archetype-modal-template', 'archetype-modal'); }
+
+    function submitArchetype() {
+      const result = document.getElementById('archetype-question').value;
+      archetype = { type: result };
+      localStorage.setItem('archetype', JSON.stringify(archetype));
+      document.getElementById('archetype-result').textContent = `Ваш архетип: ${archetypes[result]}`;
+      closeModal('archetype-modal');
+    }
+
+    // Аналитика
+    function accessAnalytics() {
+      const totalPlans = plans.length;
+      const totalTransactions = transactions.length;
+      document.getElementById('analytics-results').textContent = `Всего задач: ${totalPlans}, Транзакций: ${totalTransactions}`;
+    }
+
+    // Настройки
+    function applyState() {
+      const state = document.getElementById('state-select').value;
+      localStorage.setItem('userState', state);
+    }
+
+    // Справка
+    document.getElementById('help-content').innerHTML = '<h3>Справка</h3><p>Используйте модули для управления задачами, окружением и финансами. Данные сохраняются автоматически.</p>';
+
+    // Карта стратегии
+    let strategies = JSON.parse(localStorage.getItem('strategies') || '[]');
+
+    function renderStrategies() {
+      const strategyList = document.getElementById('strategy-list');
+      strategyList.innerHTML = '';
+      strategies.forEach((strategy, index) => {
+        const div = document.createElement('div');
+        div.innerHTML = `${strategy.goal} <button onclick="deleteStrategy(${index})">❌</button>`;
+        strategyList.appendChild(div);
+      });
+    }
+
+    function openStrategyModal() { openModal('strategy-modal-template', 'strategy-modal'); }
+
+    function addStrategy() {
+      const goal = document.getElementById('strategy-goal').value.trim();
+      if (goal) {
+        strategies.push({ goal, date: new Date().toISOString() });
+        localStorage.setItem('strategies', JSON.stringify(strategies));
+        document.getElementById('strategy-goal').value = '';
+        renderStrategies();
+        closeModal('strategy-modal');
+      } else {
+        alert('Введите цель');
+      }
+    }
+
+    function deleteStrategy(index) {
+      strategies.splice(index, 1);
+      localStorage.setItem('strategies', JSON.stringify(strategies));
+      renderStrategies();
+    }
+
+    // Инициализация
+    document.addEventListener('DOMContentLoaded', () => {
+      updateRule();
+      renderPlans();
+      renderPeople();
+      renderTransactions();
+      renderHabits();
+      renderNotes();
+      renderKnowledge();
+      renderStrategies();
+      if (archetype.type) document.getElementById('archetype-result').textContent = `Ваш архетип: ${archetypes[archetype.type]}`;
+      accessAnalytics();
+    });
+  </script>
+</body>
+</html>
