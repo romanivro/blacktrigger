@@ -22,6 +22,7 @@
     .modal.show { display: block; }
     ul { list-style: none; padding: 0; }
     li { margin: 5px 0; }
+    .stats { margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -87,9 +88,9 @@
           <option value="income">Доход</option>
           <option value="expense">Расход</option>
         </select>
-        <input type="text" id="finance-tag" placeholder="Тег">
         <button onclick="addTransaction()">Добавить</button>
         <ul id="finance-list"></ul>
+        <div class="stats" id="finance-stats"></div>
       </div>
     </div>
 
@@ -145,8 +146,6 @@
         <h2>Аналитика</h2><span>▼</span>
       </div>
       <div class="module-content">
-        <input type="password" id="analytics-password" placeholder="Пароль">
-        <button onclick="accessAnalytics()">Войти</button>
         <div id="analytics-results"></div>
       </div>
     </div>
@@ -217,9 +216,9 @@
         <h2>Тест архетипа</h2>
         <p>Выберите ответ:</p>
         <select id="archetype-question">
-          <option value="predator">Я предпочитаю действовать решительно и брать ответственность.</option>
-          <option value="strategist">Я планирую и анализирую перед действиями.</option>
-          <option value="provocateur">Я провоцирую других, чтобы увидеть их реакцию.</option>
+          <option value="predator">Я предпочитаю действовать решительно.</option>
+          <option value="strategist">Я планирую и анализирую.</option>
+          <option value="provocateur">Я провоцирую других.</option>
         </select>
         <button onclick="submitArchetype()">Отправить</button>
         <button onclick="closeModal('archetype-modal')">Закрыть</button>
@@ -312,7 +311,7 @@
         currentRule = { text: rule, adhered: 0, violated: 0, date: today };
         localStorage.setItem('currentRule', JSON.stringify(currentRule));
       }
-      document.getElementById('rule-text').textContent = currentRule.text || 'Правило не выбрано';
+      document.getElementById('rule-text').textContent = `${currentRule.text || 'Правило не выбрано'} (Соблюдено: ${currentRule.adhered || 0}, Нарушено: ${currentRule.violated || 0})`;
     }
 
     function adhereRule() {
@@ -414,24 +413,23 @@
       financeList.innerHTML = '';
       transactions.forEach((transaction, index) => {
         const li = document.createElement('li');
-        li.innerHTML = `${transaction.amount} (${transaction.type}) ${transaction.tag} <button onclick="deleteTransaction(${index})">❌</button>`;
+        li.innerHTML = `${transaction.amount} (${transaction.type}) <button onclick="deleteTransaction(${index})">❌</button>`;
         financeList.appendChild(li);
       });
+      updateFinanceStats();
     }
 
     function addTransaction() {
       const amount = parseFloat(document.getElementById('finance-amount').value);
       const type = document.getElementById('finance-type').value;
-      const tag = document.getElementById('finance-tag').value.trim();
-      if (!isNaN(amount) && amount > 0 && tag) {
-        transactions.push({ amount, type, tag, date: new Date().toISOString() });
+      if (!isNaN(amount) && amount > 0) {
+        transactions.push({ amount, type, date: new Date().toISOString() });
         localStorage.setItem('transactions', JSON.stringify(transactions));
         document.getElementById('finance-amount').value = '';
         document.getElementById('finance-type').value = 'income';
-        document.getElementById('finance-tag').value = '';
         renderTransactions();
       } else {
-        showError('finance', 'Введите сумму и тег');
+        showError('finance', 'Введите сумму');
       }
     }
 
@@ -441,7 +439,14 @@
       renderTransactions();
     }
 
-    // Привычки
+    function updateFinanceStats() {
+      const incomes = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+      const expenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+      const balance = incomes - expenses;
+      document.getElementById('finance-stats').textContent = `Доходы: ${incomes}, Расходы: ${expenses}, Баланс: ${balance}`;
+    }
+
+// Привычки
     let habits = JSON.parse(localStorage.getItem('habits') || '[]');
 
     function renderHabits() {
@@ -505,7 +510,7 @@
       renderNotes();
     }
 
-// База знаний
+    // База знаний
     let knowledge = JSON.parse(localStorage.getItem('knowledge') || '[]');
 
     function renderKnowledge() {
@@ -552,7 +557,9 @@
 
     // Аналитика
     function accessAnalytics() {
-      document.getElementById('analytics-results').textContent = 'Аналитика доступна (тест)';
+      const totalPlans = plans.length;
+      const totalTransactions = transactions.length;
+      document.getElementById('analytics-results').textContent = `Всего задач: ${totalPlans}, Транзакций: ${totalTransactions}`;
     }
 
     // Настройки
@@ -562,7 +569,7 @@
     }
 
     // Справка
-    document.getElementById('help-content').innerHTML = '<h3>Справка</h3><p>Используйте модули для управления задачами и окружением.</p>';
+    document.getElementById('help-content').innerHTML = '<h3>Справка</h3><p>Используйте модули для управления задачами, окружением и финансами. Данные сохраняются автоматически.</p>';
 
     // Карта стратегии
     let strategies = JSON.parse(localStorage.getItem('strategies') || '[]');
@@ -596,7 +603,7 @@
       renderStrategies();
     }
 
-    // Инициализация
+// Инициализация
     document.addEventListener('DOMContentLoaded', () => {
       updateRule();
       renderPlans();
@@ -607,6 +614,7 @@
       renderKnowledge();
       renderStrategies();
       if (archetype.type) document.getElementById('archetype-result').textContent = `Ваш архетип: ${archetypes[archetype.type]}`;
+      accessAnalytics();
     });
   </script>
 </body>
