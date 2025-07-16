@@ -19,7 +19,7 @@
     input, select, textarea { background: #333; color: #e0e0e0; border: 1px solid #444; padding: 5px; border-radius: 5px; width: 100%; box-sizing: border-box; margin: 5px 0; }
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
     .modal-content { background: #333; padding: 20px; margin: 10% auto; width: 80%; max-width: 600px; border-radius: 5px; overflow-y: auto; max-height: 80%; }
-    .modal.show { display: block; Receiver: }
+    .modal.show { display: block; }
     ul { list-style: none; padding: 0; }
     li { margin: 5px 0; }
     .stats { margin-top: 10px; }
@@ -31,7 +31,7 @@
       <button onclick="toggleModule('rule-module')">Правило День</button>
       <button onclick="toggleModule('plan-module')">План День</button>
       <button onclick="toggleModule('environment-module')">Окружение</button>
-      <button onclick="toggleenerbahçe-module('finance-module')">Финансы</button>
+      <button onclick="toggleModule('finance-module')">Финансы</button>
       <button onclick="toggleModule('habits-module')">Привычки</button>
       <button onclick="toggleModule('notes-module')">Заметки</button>
       <button onclick="toggleModule('knowledge-module')">База знаний</button>
@@ -114,7 +114,7 @@
       </div>
     </div>
 
-  <!-- Заметки -->
+    <!-- Заметки -->
     <div class="module collapsed" id="notes-module">
       <div class="module-header" onclick="toggleModule('notes-module')">
         <h2>📝 Заметки</h2><span>▼</span>
@@ -132,7 +132,7 @@
         <h2>📚 База знаний</h2><span>▼</span>
       </div>
       <div class="module-content">
-        <input type="text" id="knowledge-search" placeholder="Поиск по заголовкам">
+        <input type="text" id="knowledge-search" placeholder="Поиск по заголовкам" oninput="renderKnowledge()">
         <button onclick="openKnowledgeModal()">Добавить заметку</button>
         <ul id="knowledge-list"></ul>
       </div>
@@ -314,7 +314,7 @@
       reader.readAsText(file);
     }
 
-// Правило День
+    // Правило День
     let currentRule = JSON.parse(localStorage.getItem('currentRule') || '{}');
     let customRules = JSON.parse(localStorage.getItem('customRules') || '[]');
     const defaultRules = [
@@ -347,6 +347,8 @@
         currentRule.adhered = (currentRule.adhered || 0) + 1;
         localStorage.setItem('currentRule', JSON.stringify(currentRule));
         updateRule();
+      } else {
+        showError('rule', 'Сначала выберите правило');
       }
     }
 
@@ -355,6 +357,8 @@
         currentRule.violated = (currentRule.violated || 0) + 1;
         localStorage.setItem('currentRule', JSON.stringify(currentRule));
         updateRule();
+      } else {
+        showError('rule', 'Сначала выберите правило');
       }
     }
 
@@ -409,17 +413,18 @@
       peopleList.innerHTML = '';
       people.forEach((person, index) => {
         const div = document.createElement('div');
-        div.innerHTML = `${person.name} (${person.status}) <button onclick="deletePerson(${index})">❌</button>`;
+        div.innerHTML = `${person.name} (${person.status}) [${person.tags.join(', ')}] <button onclick="deletePerson(${index})">❌</button>`;
         peopleList.appendChild(div);
       });
     }
 
-    function openPersonModal() { openModal('person-modal', 'person-modal'); }
+    function openPersonModal() { openModal('person-modal-template', 'person-modal'); }
 
     function addPerson() {
       const name = document.getElementById('person-name').value.trim();
       const status = document.getElementById('person-status').value;
-      const tags = document.getElementById('person-tags').value.split(',').map(tag => tag.trim()).filter(tag => tag);
+      const tagsInput = document.getElementById('person-tags').value.trim();
+      const tags = tagsInput ? tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
       if (name) {
         people.push({ name, status, tags });
         localStorage.setItem('people', JSON.stringify(people));
@@ -456,7 +461,7 @@
     function addTransaction() {
       const amount = parseFloat(document.getElementById('finance-amount').value);
       const type = document.getElementById('finance-type').value;
-      if (!isNaN(amount) && amount > 0)scribed {
+      if (!isNaN(amount) && amount > 0) {
         transactions.push({ amount, type, date: new Date().toISOString() });
         localStorage.setItem('transactions', JSON.stringify(transactions));
         document.getElementById('finance-amount').value = '';
@@ -480,7 +485,7 @@
       document.getElementById('finance-stats').textContent = `Доходы: ${incomes}, Расходы: ${expenses}, Баланс: ${balance}`;
     }
 
-    // Привычки
+// Привычки
     let habits = JSON.parse(localStorage.getItem('habits') || '[]');
 
     function renderHabits() {
@@ -513,7 +518,7 @@
       renderHabits();
     }
 
-// Заметки
+    // Заметки
     let notes = JSON.parse(localStorage.getItem('notes') || '[]');
 
     function renderNotes() {
@@ -521,7 +526,7 @@
       noteList.innerHTML = '';
       notes.forEach((note, index) => {
         const li = document.createElement('li');
-        li.innerHTML = `${note.text} <button onclick="deleteNote(${index})">❌</button>`;
+        li.innerHTML = `${note.text} (${new Date(note.date).toLocaleDateString()}) <button onclick="deleteNote(${index})">❌</button>`;
         noteList.appendChild(li);
       });
     }
